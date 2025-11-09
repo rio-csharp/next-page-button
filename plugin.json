@@ -1,29 +1,31 @@
 {
   "name": "next-page-button",
   "version": "0.1.0",
-  "author": "rio",
+  "author": "rio-csharp",
   "url": "https://github.com/rio-csharp/next-page-button",
   "minAppVersion": "3.0.0",
+  "backends": [
+    "all"
+  ],
+  "frontends": [
+    "all"
+  ],
   "displayName": {
     "default": "Next Page Button",
-    "zh_CN": "文档导航按钮",
-    "en_US": "Next Page Button"
+    "zh_CN": "文档导航按钮"
   },
   "description": {
     "default": "Add previous and next page buttons at the bottom of each document to browse all documents in tree order",
-    "zh_CN": "在每个文档底部添加上一页和下一页按钮，按照文档树顺序浏览所有文档",
-    "en_US": "Add previous and next page buttons at the bottom of each document to browse all documents in tree order"
+    "zh_CN": "在每个文档底部添加上一页和下一页按钮,按照文档树顺序浏览所有文档"
   },
   "readme": {
     "default": "README.md",
-    "zh_CN": "README_zh_CN.md",
-    "en_US": "README.md"
+    "zh_CN": "README_zh_CN.md"
   },
-  "i18n": [
-    "en_US",
-    "zh_CN"
-  ],
   "funding": {
+    "openCollective": "",
+    "patreon": "",
+    "github": "",
     "custom": []
   },
   "keywords": [
@@ -33,8 +35,5 @@
     "导航",
     "文档",
     "翻页"
-  ],
-  "main": "index.js",
-  "frontends": ["desktop", "desktop-window", "mobile", "browser-desktop", "browser-mobile"],
-  "backends": ["windows", "linux", "darwin", "docker", "android", "ios"]
+  ]
 }
