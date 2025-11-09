@@ -4,16 +4,14 @@ English | [中文](./README_zh_CN.md)
 
 > Navigate through your documents sequentially with "Previous" and "Next" buttons at the bottom of each document.
 
-![Preview](preview.png)
-
 ##  Features
 
-- ** Sequential Navigation**: Browse documents in tree order with prev/next buttons
-- ** Position Indicator**: See where you are (e.g., "5 / 20")
-- ** Real-time Updates**: Automatically adapts to document changes
-- ** Multi-notebook**: Works across all your opened notebooks
-- ** Theme Compatible**: Seamlessly integrates with SiYuan's UI
-- ** Zero Configuration**: Works out of the box
+- **Sequential Navigation**: Browse documents in tree order with prev/next buttons
+- **Position Indicator**: See where you are (e.g., "5 / 20")
+- **Real-time Updates**: Automatically adapts to document changes
+- **Multi-notebook**: Works across all your opened notebooks
+- **Theme Compatible**: Seamlessly integrates with SiYuan's UI
+- **Zero Configuration**: Works out of the box
 
 ##  Installation
 

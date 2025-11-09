@@ -37,45 +37,42 @@ export default class PageNavPlugin extends Plugin {
     return value;
   }
 
+  private handleDocumentSwitch = async (detail: any) => {
+    await this.loadDocList();
+    await this.insertNavButtonsWithProtyle(detail?.protyle);
+  };
+
+  private handleWsMain = async (detail: any) => {
+    const data = detail?.data;
+    if (!data || data.cmd !== "transactions") return;
+    this.log("文档变更事件触发，重新加载文档列表");
+    await this.loadDocList();
+    await this.insertNavButtons();
+  };
+
   async onload() {
     this.log("插件加载中...");
     this.log("i18n 对象:", this.i18n);
-    
+
     await this.loadDocList();
-    
-    // 加载完成后立即插入按钮
-    setTimeout(() => {
-      this.insertNavButtons();
-    }, 500);
+    await this.insertNavButtons();
 
     // 监听文档切换和加载事件
-    // 每次切换都重新加载文档列表，确保页码和按钮状态是最新的
-    // 这样可以处理文档移动、重命名、排序等所有变更
-    const handleDocumentSwitch = async (detail: any) => {
-      await this.loadDocList();
-      setTimeout(() => this.insertNavButtonsWithProtyle(detail?.protyle), 100);
-    };
-
-    this.eventBus.on("loaded-protyle-static", handleDocumentSwitch);
-    this.eventBus.on("switch-protyle", handleDocumentSwitch);
-    this.eventBus.on("loaded-protyle-dynamic", handleDocumentSwitch);
+    this.eventBus.on("loaded-protyle-static", this.handleDocumentSwitch);
+    this.eventBus.on("switch-protyle", this.handleDocumentSwitch);
+    this.eventBus.on("loaded-protyle-dynamic", this.handleDocumentSwitch);
 
     // 监听 WebSocket 消息，捕获文档创建、删除、移动等操作
-    // 这个主要是为了在不切换文档的情况下，后台有文档变更时也能更新
-    this.eventBus.on("ws-main", (detail: any) => {
-      const data = detail?.data;
-      if (!data || data.cmd !== "transactions") return;
-      
-      this.log("文档变更事件触发，重新加载文档列表");
-      setTimeout(async () => {
-        await this.loadDocList();
-        this.insertNavButtons();
-      }, 500);
-    });
+    this.eventBus.on("ws-main", this.handleWsMain);
   }
 
   onunload() {
     document.querySelectorAll("#page-nav-plugin-container").forEach(el => el.remove());
+    // 解绑所有事件，防止内存泄漏
+    this.eventBus.off("loaded-protyle-static", this.handleDocumentSwitch);
+    this.eventBus.off("switch-protyle", this.handleDocumentSwitch);
+    this.eventBus.off("loaded-protyle-dynamic", this.handleDocumentSwitch);
+    this.eventBus.off("ws-main", this.handleWsMain);
   }
 
   private async loadDocList() {
@@ -195,8 +192,9 @@ export default class PageNavPlugin extends Plugin {
       font-size: 13px;
       opacity: 0.7;
       white-space: nowrap;
-      user-select: none;
     `;
+    
+    indicator.contentEditable = "false";
 
     const btnNext = this.createButton(
       `<span>${this.getI18n("nextPage")}</span><svg class="b3-button__icon"><use xlink:href="#iconRight"></use></svg>`,
@@ -285,11 +283,10 @@ export default class PageNavPlugin extends Plugin {
     protyleElement.querySelectorAll("#page-nav-plugin-container").forEach(el => el.remove());
 
     const container = this.createNavigationContainer(index);
-    const wysiwyg = protyleElement.querySelector(".protyle-wysiwyg");
-    if (wysiwyg) {
-      wysiwyg.appendChild(container);
-      this.log("按钮已插入到文档");
-    }
+    // 将容器插入到 protyle 元素末尾，而不是 wysiwyg 内部
+    // 这样按钮就在编辑区域之外了
+    protyleElement.appendChild(container);
+    this.log("按钮已插入到文档");
   };
 
   private insertNavButtons = async () => {
@@ -301,11 +298,9 @@ export default class PageNavPlugin extends Plugin {
     const dataNodeId = protyleTitle?.getAttribute("data-node-id") 
       || protyleContent?.getAttribute("data-node-id");
     
-    const protyleWysiwyg = (protyleTitle || protyleContent)
-      ?.closest(".protyle")
-      ?.querySelector(".protyle-wysiwyg");
+    const protyleElement = (protyleTitle || protyleContent)?.closest(".protyle");
     
-    if (!dataNodeId || !protyleWysiwyg) {
+    if (!dataNodeId || !protyleElement) {
       this.log("降级方法：未找到文档ID或编辑器容器");
       return;
     }
@@ -324,7 +319,8 @@ export default class PageNavPlugin extends Plugin {
     this.log("降级方法找到文档，索引:", index + 1, "/", this.docs.length);
 
     const container = this.createNavigationContainer(index);
-    protyleWysiwyg.appendChild(container);
+    // 将容器插入到 protyle 元素末尾，而不是 wysiwyg 内部
+    protyleElement.appendChild(container);
     this.log("按钮已插入（降级方法）");
   };
 }

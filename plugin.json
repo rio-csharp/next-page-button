@@ -4,6 +4,7 @@
   "author": "rio-csharp",
   "url": "https://github.com/rio-csharp/next-page-button",
   "minAppVersion": "3.0.0",
+  "disabledInPublish": false,
   "backends": [
     "all"
   ],
@@ -30,10 +31,6 @@
   },
   "keywords": [
     "navigation",
-    "document",
-    "page",
-    "导航",
-    "文档",
     "翻页"
   ]
 }
