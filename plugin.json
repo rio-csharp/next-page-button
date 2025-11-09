@@ -1,0 +1,35 @@
+{
+  "name": "next-page-button",
+  "version": "0.1.0",
+  "author": "rio",
+  "url": "https://github.com/rio/next-page-button",
+  "minAppVersion": "3.0.0",
+  "displayName": {
+    "zh_CN": "文档导航按钮",
+    "en_US": "Next Page Button"
+  },
+  "description": {
+    "zh_CN": "在每个文档底部添加上一页和下一页按钮，按照文档树顺序浏览所有文档",
+    "en_US": "Add previous and next page buttons at the bottom of each document to browse all documents in tree order"
+  },
+  "readme": {
+    "zh_CN": "README_zh_CN.md",
+    "en_US": "README.md"
+  },
+  "funding": {
+    "custom": [
+      "https://github.com/sponsors/rio"
+    ]
+  },
+  "keywords": [
+    "navigation",
+    "document",
+    "page",
+    "导航",
+    "文档",
+    "翻页"
+  ],
+  "main": "index.js",
+  "frontends": ["desktop", "browser-desktop"],
+  "backends": ["windows", "linux", "darwin"]
+}
