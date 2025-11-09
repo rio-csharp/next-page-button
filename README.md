@@ -3,27 +3,22 @@
 
 English | [中文](./README_zh_CN.md)
 
-> Add "Previous" and "Next" navigation buttons at the bottom of each document in SiYuan, allowing you to browse all documents in document tree order.
+> Navigate through your documents sequentially with "Previous" and "Next" buttons at the bottom of each document.
 
 ![Preview](preview.png)
 
 ## ✨ Features
 
-- 🔄 **Auto Document Navigation**: Display prev/next buttons at document bottom
-- 📊 **Page Indicator**: Real-time display of current position (e.g., 3 / 10)
-- 📚 **Multi-notebook Support**: Automatically handle all open notebooks
-- 🔔 **Real-time Updates**: Auto response to document tree changes
-  - Create new document ✓
-  - Delete document ✓
-  - Move document ✓
-  - Rename document ✓
-  - Drag & drop reorder ✓
-- 🎨 **Theme Integration**: Perfect adaptation to SiYuan's theme system
-- ⚡ **Performance**: Concurrent loading protection
+- **📖 Sequential Navigation**: Browse documents in tree order with prev/next buttons
+- **📍 Position Indicator**: See where you are (e.g., "5 / 20")
+- **🔄 Real-time Updates**: Automatically adapts to document changes
+- **📚 Multi-notebook**: Works across all your opened notebooks
+- **🎨 Theme Compatible**: Seamlessly integrates with SiYuan's UI
+- **🚀 Zero Configuration**: Works out of the box
 
 ## 📦 Installation
 
-### From Marketplace (Recommended)
+### From Plugin Marketplace (Recommended)
 
 1. Open SiYuan Notes
 2. Go to `Settings` → `Marketplace` → `Plugins`
@@ -32,74 +27,40 @@ English | [中文](./README_zh_CN.md)
 
 ### Manual Installation
 
-1. Download latest `package.zip` from [Releases](https://github.com/rio/next-page-button/releases)
+1. Download `package.zip` from [Releases](https://github.com/rio-csharp/next-page-button/releases)
 2. Extract to `{workspace}/data/plugins/`
 3. Restart SiYuan
-4. Enable in `Settings` → `Marketplace` → `Downloaded` → `Plugins`
+4. Enable in `Settings` → `Marketplace` → `Downloaded`
 
 ## 🚀 Usage
 
-The plugin works automatically after enabling, no configuration needed:
+After installation, the plugin works automatically:
 
 1. Open any document
-2. Scroll to document bottom to see navigation buttons
-3. Click "Previous" or "Next" to navigate
-4. Page indicator shows current position (e.g., 5 / 20)
+2. Scroll to the bottom
+3. Use the navigation buttons to move between documents
+4. The page indicator shows your current position
 
 **Button States:**
-- 🔵 **Enabled**: Blue button, clickable for navigation
-- ⚪ **Disabled**: Gray button, not clickable (first/last document)
+- 🔵 **Active**: Blue buttons are clickable
+- ⚪ **Disabled**: Gray buttons indicate first/last document
 
-## 💡 How It Works
+## � Real-time Updates
 
-- Use SiYuan's `listDocsByPath` API to recursively fetch document tree
-- Perfect support for user-dragged document order
-- Listen to document switch events and WebSocket messages for real-time updates
-- Concurrent loading protection for better performance
-
-## 🛠 Development
-
-Based on [siyuan-plugin-sample](https://github.com/siyuan-note/plugin-sample) template
-
-### Tech Stack
-
-- TypeScript
-- Vite
-- SiYuan Plugin API
-
-### Local Development
-
-```bash
-# Install dependencies
-pnpm install
-
-# Create symbolic link
-pnpm run make-link
-
-# Development mode (hot reload)
-pnpm run dev
-
-# Build for production
-pnpm run build
-```
-
-### Debug
-
-Set `DEBUG = true` in line 12 of `src/index.ts` to enable detailed logs:
-
-```typescript
-private readonly DEBUG = true; // Set to true for development
-```
-
-See [DEVELOPMENT.md](DEVELOPMENT.md) for details
-
-## 📝 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md)
+The navigation automatically updates when you:
+- Create or delete documents
+- Move or rename documents
+- Reorder documents by dragging
 
 ## 🤝 Contributing
 
-Issues and Pull Requests are welcome!
+Contributions are welcome! Please feel free to submit issues or pull requests.
+
+For development setup, see [DEVELOPMENT.md](DEVELOPMENT.md)
+
+## 📝 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 ## 📄 License
 
@@ -107,7 +68,7 @@ Issues and Pull Requests are welcome!
 
 ---
 
-[中文版](./README_zh_CN.md)
+**Links**: [中文文档](./README_zh_CN.md) · [Report Bug](https://github.com/rio-csharp/next-page-button/issues) · [Development Guide](./DEVELOPMENT.md)
 
 
 

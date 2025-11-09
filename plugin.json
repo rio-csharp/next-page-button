@@ -2,7 +2,7 @@
   "name": "next-page-button",
   "version": "0.1.0",
   "author": "rio",
-  "url": "https://github.com/rio/next-page-button",
+  "url": "https://github.com/rio-csharp/next-page-button",
   "minAppVersion": "3.0.0",
   "displayName": {
     "zh_CN": "文档导航按钮",
@@ -17,9 +17,7 @@
     "en_US": "README.md"
   },
   "funding": {
-    "custom": [
-      "https://github.com/sponsors/rio"
-    ]
+    "custom": []
   },
   "keywords": [
     "navigation",
