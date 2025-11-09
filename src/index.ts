@@ -21,8 +21,25 @@ export default class PageNavPlugin extends Plugin {
     console.error("[NextPageButton]", ...args);
   }
 
+  private getI18n(key: string): string {
+    const value = this.i18n[key];
+    if (this.DEBUG) {
+      console.log(`[i18n] key: ${key}, value: ${value}, i18n object:`, this.i18n);
+    }
+    // Provide fallback text if i18n is not loaded
+    if (!value) {
+      const fallbacks: Record<string, string> = {
+        "prevPage": "Previous",
+        "nextPage": "Next"
+      };
+      return fallbacks[key] || key;
+    }
+    return value;
+  }
+
   async onload() {
     this.log("插件加载中...");
+    this.log("i18n 对象:", this.i18n);
     
     await this.loadDocList();
     
@@ -162,7 +179,7 @@ export default class PageNavPlugin extends Plugin {
     const isLast = index === this.docs.length - 1;
 
     const btnPrev = this.createButton(
-      `<svg class="b3-button__icon"><use xlink:href="#iconLeft"></use></svg><span>上一页</span>`,
+      `<svg class="b3-button__icon"><use xlink:href="#iconLeft"></use></svg><span>${this.getI18n("prevPage")}</span>`,
       isFirst,
       async () => {
         if (index > 0) {
@@ -182,7 +199,7 @@ export default class PageNavPlugin extends Plugin {
     `;
 
     const btnNext = this.createButton(
-      `<span>下一页</span><svg class="b3-button__icon"><use xlink:href="#iconRight"></use></svg>`,
+      `<span>${this.getI18n("nextPage")}</span><svg class="b3-button__icon"><use xlink:href="#iconRight"></use></svg>`,
       isLast,
       async () => {
         if (index < this.docs.length - 1) {
