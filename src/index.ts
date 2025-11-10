@@ -1,209 +1,201 @@
 import { Plugin, openTab } from "siyuan";
+import "./index.scss";
 
 interface DocItem {
   id: string;
   content: string;
   path: string;
+  notebookId: string;
 }
+
+const CONTAINER_ID = "page-nav-plugin-container";
+const CUSTOM_FULLWIDTH_ATTR = "custom-sy-fullwidth";
+const MAX_RECURSION_DEPTH = 50;
+const FETCH_TIMEOUT = 10000;
 
 export default class PageNavPlugin extends Plugin {
   private docs: DocItem[] = [];
-  private isLoadingDocs = false; // 防止并发加载
-  private readonly DEBUG = false; // 发布时改为 false，开发时改为 true
-
-  private log(...args: any[]) {
-    if (this.DEBUG) {
-      console.log("[NextPageButton]", ...args);
-    }
-  }
-
-  private logError(...args: any[]) {
-    console.error("[NextPageButton]", ...args);
-  }
+  private isLoadingDocs = false;
+  private isNavigating = false;
 
   private getI18n(key: string): string {
-    const value = this.i18n[key];
-    if (this.DEBUG) {
-      console.log(`[i18n] key: ${key}, value: ${value}, i18n object:`, this.i18n);
-    }
-    // Provide fallback text if i18n is not loaded
-    if (!value) {
-      const fallbacks: Record<string, string> = {
-        "prevPage": "Previous",
-        "nextPage": "Next"
-      };
-      return fallbacks[key] || key;
-    }
-    return value;
+    return this.i18n[key] || key;
   }
 
-  private handleDocumentSwitch = async (detail: any) => {
-    await this.loadDocList();
-    await this.insertNavButtonsWithProtyle(detail?.protyle);
-  };
-
-  private handleWsMain = async (detail: any) => {
-    const data = detail?.data;
-    if (!data || data.cmd !== "transactions") return;
-    this.log("文档变更事件触发，重新加载文档列表");
-    await this.loadDocList();
-    await this.insertNavButtons();
-  };
-
   async onload() {
-    this.log("插件加载中...");
-    this.log("i18n 对象:", this.i18n);
+    try {
+      await this.loadDocList();
+      await this.renderNavButtons();
 
-    await this.loadDocList();
-    await this.insertNavButtons();
-
-    // 监听文档切换和加载事件
-    this.eventBus.on("loaded-protyle-static", this.handleDocumentSwitch);
-    this.eventBus.on("switch-protyle", this.handleDocumentSwitch);
-    this.eventBus.on("loaded-protyle-dynamic", this.handleDocumentSwitch);
-
-    // 监听 WebSocket 消息，捕获文档创建、删除、移动等操作
-    this.eventBus.on("ws-main", this.handleWsMain);
+      this.eventBus.on("loaded-protyle-static", this.handleDocumentSwitch);
+      this.eventBus.on("switch-protyle", this.handleDocumentSwitch);
+      this.eventBus.on("loaded-protyle-dynamic", this.handleDocumentSwitch);
+      this.eventBus.on("ws-main", this.handleWsMain);
+    } catch (err) {
+      console.error("[NextPageButton] Plugin load failed:", err);
+    }
   }
 
   onunload() {
-    document.querySelectorAll("#page-nav-plugin-container").forEach(el => el.remove());
-    // 解绑所有事件，防止内存泄漏
-    this.eventBus.off("loaded-protyle-static", this.handleDocumentSwitch);
-    this.eventBus.off("switch-protyle", this.handleDocumentSwitch);
-    this.eventBus.off("loaded-protyle-dynamic", this.handleDocumentSwitch);
-    this.eventBus.off("ws-main", this.handleWsMain);
+    try {
+      this.eventBus.off("loaded-protyle-static", this.handleDocumentSwitch);
+      this.eventBus.off("switch-protyle", this.handleDocumentSwitch);
+      this.eventBus.off("loaded-protyle-dynamic", this.handleDocumentSwitch);
+      this.eventBus.off("ws-main", this.handleWsMain);
+      
+      document.querySelectorAll(`#${CONTAINER_ID}`).forEach(el => el.remove());
+      
+      this.docs = [];
+      this.isLoadingDocs = false;
+      this.isNavigating = false;
+    } catch (err) {
+      console.error("[NextPageButton] Plugin unload failed:", err);
+    }
   }
 
-  private async loadDocList() {
-    // 防止并发加载，避免多个事件同时触发时重复加载
-    if (this.isLoadingDocs) {
-      this.log("文档列表正在加载中，跳过本次请求");
-      return;
+  private handleDocumentSwitch = async (detail: any) => {
+    try {
+      await this.loadDocList();
+      await this.renderNavButtonsWithProtyle(detail?.protyle);
+    } catch (err) {
+      console.error("[NextPageButton] Document switch failed:", err);
     }
+  };
+
+  private handleWsMain = async (detail: any) => {
+    try {
+      const data = detail?.data;
+      if (!data || data.cmd !== "transactions") return;
+
+      const transactions = data.transactions || [];
+      let needReload = false;
+      let needRerender = false;
+
+      for (const transaction of transactions) {
+        if (!transaction.doOperations) continue;
+        
+        for (const op of transaction.doOperations) {
+          if (op.action === "update" && op.data?.new?.[CUSTOM_FULLWIDTH_ATTR] !== op.data?.old?.[CUSTOM_FULLWIDTH_ATTR]) {
+            needRerender = true;
+          }
+          if (op.action === "create" || op.action === "delete" || op.action === "move") {
+            needReload = true;
+          }
+        }
+      }
+
+      if (needReload) {
+        await this.loadDocList();
+      }
+      if (needReload || needRerender) {
+        await this.renderNavButtons();
+      }
+    } catch (err) {
+      console.error("[NextPageButton] WebSocket event handling failed:", err);
+    }
+  };
+
+  private async loadDocList(): Promise<void> {
+    if (this.isLoadingDocs) return;
 
     this.isLoadingDocs = true;
+    const timeoutId = setTimeout(() => {
+      console.warn("[NextPageButton] Load doc list timeout");
+      this.isLoadingDocs = false;
+    }, FETCH_TIMEOUT);
+
     try {
-      const notebooksResponse = await fetch("/api/notebook/lsNotebooks", {
-        method: "POST"
-      });
-      const notebooksResult: any = await notebooksResponse.json();
-      
-      if (notebooksResult.code !== 0 || !notebooksResult.data?.notebooks) {
+      const response = await fetch("/api/notebook/lsNotebooks", { method: "POST" });
+      const result = await response.json();
+
+      if (result.code !== 0 || !result.data?.notebooks) {
         this.docs = [];
         return;
       }
 
-      // 使用未公开的 API listDocsByPath 递归获取文档树
-      // 这是唯一能获取用户拖拽后正确顺序的方法
       const allDocs: DocItem[] = [];
-      for (const notebook of notebooksResult.data.notebooks) {
-        if (notebook.closed) continue;
-        
-        await this.loadDocsFromPath(notebook.id, "/", allDocs);
+      for (const notebook of result.data.notebooks) {
+        if (!notebook.closed) {
+          await this.loadDocsFromPath(notebook.id, "/", allDocs);
+        }
       }
-      
       this.docs = allDocs;
-      this.log("已加载文档数量:", this.docs.length);
-      this.log("文档顺序:", this.docs.map(d => d.content).join(" → "));
-    } catch (e) {
-      this.logError("加载文档列表失败:", e);
+    } catch (err) {
+      console.error("[NextPageButton] Failed to load doc list:", err);
       this.docs = [];
     } finally {
+      clearTimeout(timeoutId);
       this.isLoadingDocs = false;
     }
   }
 
-  /**
-   * 递归加载指定路径下的所有文档
-   * 注意：使用了 SiYuan 的未公开 API /api/filetree/listDocsByPath
-   * 这是唯一能获取用户手动拖拽后正确文档顺序的方法
-   */
-  private async loadDocsFromPath(notebookId: string, path: string, result: DocItem[]): Promise<void> {
+  private async loadDocsFromPath(notebookId: string, path: string, result: DocItem[], depth = 0): Promise<void> {
+    if (depth >= MAX_RECURSION_DEPTH) {
+      console.warn(`[NextPageButton] Max recursion depth reached at path: ${path}`);
+      return;
+    }
+
     try {
       const response = await fetch("/api/filetree/listDocsByPath", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          notebook: notebookId,
-          path: path
-        })
+        body: JSON.stringify({ notebook: notebookId, path })
       });
-      const data: any = await response.json();
-      
-      if (data.code !== 0 || !data.data?.files) {
-        return;
-      }
-      
-      // 遍历当前路径下的所有文档
+      const data = await response.json();
+
+      if (data.code !== 0 || !data.data?.files) return;
+
       for (const file of data.data.files) {
-        if (file.id && file.name) {
-          // 从 name 中去掉 .sy 后缀得到文档标题
-          const title = file.name.replace(/\.sy$/, '');
-          
-          result.push({
-            id: file.id,
-            content: title,
-            path: file.path
-          });
-          
-          // 如果有子文档，递归获取
-          if (file.subFileCount > 0) {
-            await this.loadDocsFromPath(notebookId, file.path, result);
-          }
+        if (!file.id || !file.name) continue;
+
+        result.push({
+          id: file.id,
+          content: file.name.replace(/\.sy$/, ""),
+          path: file.path,
+          notebookId
+        });
+
+        if (file.subFileCount > 0) {
+          await this.loadDocsFromPath(notebookId, file.path, result, depth + 1);
         }
       }
-    } catch (e) {
-      this.log("加载路径失败:", path, e);
+    } catch (err) {
+      console.error(`[NextPageButton] Failed to load path ${path}:`, err);
     }
   }
 
-  private createNavigationContainer(index: number): HTMLDivElement {
+  private createNavigationContainer(
+    currentDocId: string,
+    notebookId: string,
+    notebookDocs: DocItem[],
+    indexInNotebook: number
+  ): HTMLDivElement {
     const container = document.createElement("div");
-    container.id = "page-nav-plugin-container";
-    container.style.cssText = `
-      padding: 16px;
-      margin-top: 24px;
-      border-top: 1px solid var(--b3-theme-surface-lighter);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      background: var(--b3-theme-background);
-    `;
+    container.id = CONTAINER_ID;
 
-    const isFirst = index === 0;
-    const isLast = index === this.docs.length - 1;
+    const isFirst = indexInNotebook === 0;
+    const isLast = indexInNotebook === notebookDocs.length - 1;
+
+    const prevText = this.getI18n("prevPage");
+    const nextText = this.getI18n("nextPage");
 
     const btnPrev = this.createButton(
-      `<svg class="b3-button__icon"><use xlink:href="#iconLeft"></use></svg><span>${this.getI18n("prevPage")}</span>`,
+      `<svg class="b3-button__icon"><use xlink:href="#iconLeft"></use></svg><span>${prevText}</span>`,
       isFirst,
-      async () => {
-        if (index > 0) {
-          await this.navigateToDoc(this.docs[index - 1].id);
-        }
-      }
+      () => this.navigatePrev(currentDocId, notebookId)
     );
 
     const indicator = document.createElement("span");
-    indicator.textContent = `${index + 1} / ${this.docs.length}`;
-    indicator.style.cssText = `
-      color: var(--b3-theme-on-surface);
-      font-size: 13px;
-      opacity: 0.7;
-      white-space: nowrap;
-    `;
-    
+    const currentPage = indexInNotebook + 1;
+    const totalPages = notebookDocs.length;
+    indicator.textContent = `${currentPage} / ${totalPages}`;
+    indicator.className = "page-nav-indicator";
     indicator.contentEditable = "false";
 
     const btnNext = this.createButton(
-      `<span>${this.getI18n("nextPage")}</span><svg class="b3-button__icon"><use xlink:href="#iconRight"></use></svg>`,
+      `<span>${nextText}</span><svg class="b3-button__icon"><use xlink:href="#iconRight"></use></svg>`,
       isLast,
-      async () => {
-        if (index < this.docs.length - 1) {
-          await this.navigateToDoc(this.docs[index + 1].id);
-        }
-      }
+      () => this.navigateNext(currentDocId, notebookId)
     );
 
     container.appendChild(btnPrev);
@@ -213,114 +205,134 @@ export default class PageNavPlugin extends Plugin {
     return container;
   }
 
-  private createButton(innerHTML: string, disabled: boolean, onClick: () => Promise<void>): HTMLButtonElement {
+  private createButton(innerHTML: string, disabled: boolean, onClick: () => void): HTMLButtonElement {
     const button = document.createElement("button");
     button.innerHTML = innerHTML;
-    button.className = "b3-button b3-button--outline";
+    button.className = "b3-button b3-button--outline page-nav-button";
     button.contentEditable = "false";
-    button.style.cssText = `
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      min-height: 32px;
-      opacity: ${disabled ? '0.5' : '1'};
-      cursor: ${disabled ? 'not-allowed' : 'pointer'};
-      user-select: none;
-      ${disabled ? 'pointer-events: none;' : ''}
-    `;
-    
-    if (disabled) {
-      button.disabled = true;
-    } else {
-      button.onclick = async (e) => {
+    button.disabled = disabled;
+    button.type = "button";
+
+    if (!disabled) {
+      const handleClick = (e: Event) => {
         e.preventDefault();
         e.stopPropagation();
-        await onClick();
+        onClick();
       };
+      button.addEventListener("click", handleClick, { once: false });
     }
-    
+
     return button;
   }
 
-  private async navigateToDoc(docId: string) {
+  private async navigatePrev(currentDocId: string, notebookId: string): Promise<void> {
+    if (this.isNavigating) return;
+    
+    this.isNavigating = true;
     try {
-      openTab({ app: this.app, doc: { id: docId } });
-    } catch (err) {
-      this.logError("打开文档失败:", err);
       await this.loadDocList();
-      this.insertNavButtons();
+      const notebookDocs = this.docs.filter(doc => doc.notebookId === notebookId);
+      const currentIndex = notebookDocs.findIndex(doc => doc.id === currentDocId);
+
+      if (currentIndex > 0) {
+        openTab({ app: this.app, doc: { id: notebookDocs[currentIndex - 1].id } });
+      } else {
+        await this.renderNavButtons();
+      }
+    } catch (err) {
+      console.error("[NextPageButton] Navigate prev failed:", err);
+    } finally {
+      this.isNavigating = false;
     }
   }
 
-  private insertNavButtonsWithProtyle = async (protyle?: any) => {
+  private async navigateNext(currentDocId: string, notebookId: string): Promise<void> {
+    if (this.isNavigating) return;
+    
+    this.isNavigating = true;
+    try {
+      await this.loadDocList();
+      const notebookDocs = this.docs.filter(doc => doc.notebookId === notebookId);
+      const currentIndex = notebookDocs.findIndex(doc => doc.id === currentDocId);
+
+      if (currentIndex >= 0 && currentIndex < notebookDocs.length - 1) {
+        openTab({ app: this.app, doc: { id: notebookDocs[currentIndex + 1].id } });
+      } else {
+        await this.renderNavButtons();
+      }
+    } catch (err) {
+      console.error("[NextPageButton] Navigate next failed:", err);
+    } finally {
+      this.isNavigating = false;
+    }
+  }
+
+  private async renderNavButtonsWithProtyle(protyle?: any): Promise<void> {
     if (!protyle?.block) {
-      return this.insertNavButtons();
+      return this.renderNavButtons();
     }
 
-    const dataNodeId = protyle.block.rootID;
-    const protyleElement = protyle.element;
-    
-    if (!dataNodeId || !protyleElement) {
-      this.log("未找到文档块ID或protyle元素");
-      return;
+    try {
+      const docId = protyle.block.rootID;
+      const protyleElement = protyle.element;
+
+      if (!docId || !protyleElement || !this.docs.length) return;
+
+      const currentDoc = this.docs.find(doc => doc.id === docId);
+      if (!currentDoc) return;
+
+      const notebookDocs = this.docs.filter(doc => doc.notebookId === currentDoc.notebookId);
+      if (notebookDocs.length === 0) return;
+
+      const index = notebookDocs.findIndex(doc => doc.id === docId);
+      if (index < 0) return;
+
+      protyleElement.querySelectorAll(`#${CONTAINER_ID}`).forEach((el: Element) => {
+        if (el.parentNode) {
+          el.remove();
+        }
+      });
+
+      const container = this.createNavigationContainer(docId, currentDoc.notebookId, notebookDocs, index);
+      if (protyleElement.parentNode) {
+        protyleElement.appendChild(container);
+      }
+    } catch (err) {
+      console.error("[NextPageButton] Render buttons with protyle failed:", err);
     }
+  }
 
-    if (!this.docs.length) {
-      this.log("文档列表为空");
-      return;
+  private async renderNavButtons(): Promise<void> {
+    try {
+      document.querySelectorAll(`#${CONTAINER_ID}`).forEach(el => {
+        if (el.parentNode) {
+          el.remove();
+        }
+      });
+
+      const protyleTitle = document.querySelector(".protyle:not(.fn__none) .protyle-title");
+      const protyleContent = document.querySelector(".protyle:not(.fn__none) .protyle-content");
+
+      const docId = protyleTitle?.getAttribute("data-node-id") || protyleContent?.getAttribute("data-node-id");
+      const protyleElement = (protyleTitle || protyleContent)?.closest(".protyle");
+
+      if (!docId || !protyleElement || !this.docs.length) return;
+
+      const currentDoc = this.docs.find(doc => doc.id === docId);
+      if (!currentDoc) return;
+
+      const notebookDocs = this.docs.filter(doc => doc.notebookId === currentDoc.notebookId);
+      if (notebookDocs.length === 0) return;
+
+      const index = notebookDocs.findIndex(doc => doc.id === docId);
+      if (index < 0) return;
+
+      const container = this.createNavigationContainer(docId, currentDoc.notebookId, notebookDocs, index);
+      if (protyleElement.parentNode) {
+        protyleElement.appendChild(container);
+      }
+    } catch (err) {
+      console.error("[NextPageButton] Render buttons failed:", err);
     }
-
-    const index = this.docs.findIndex(doc => doc.id === dataNodeId);
-    if (index < 0) {
-      this.log("当前文档不在列表中:", dataNodeId);
-      return;
-    }
-    
-    this.log("找到当前文档:", this.docs[index].content, "索引:", index + 1, "/", this.docs.length);
-
-    protyleElement.querySelectorAll("#page-nav-plugin-container").forEach(el => el.remove());
-
-    const container = this.createNavigationContainer(index);
-    // 将容器插入到 protyle 元素末尾，而不是 wysiwyg 内部
-    // 这样按钮就在编辑区域之外了
-    protyleElement.appendChild(container);
-    this.log("按钮已插入到文档");
-  };
-
-  private insertNavButtons = async () => {
-    document.querySelectorAll("#page-nav-plugin-container").forEach(el => el.remove());
-
-    const protyleTitle = document.querySelector(".protyle:not(.fn__none) .protyle-title");
-    const protyleContent = document.querySelector(".protyle:not(.fn__none) .protyle-content");
-    
-    const dataNodeId = protyleTitle?.getAttribute("data-node-id") 
-      || protyleContent?.getAttribute("data-node-id");
-    
-    const protyleElement = (protyleTitle || protyleContent)?.closest(".protyle");
-    
-    if (!dataNodeId || !protyleElement) {
-      this.log("降级方法：未找到文档ID或编辑器容器");
-      return;
-    }
-
-    if (!this.docs.length) {
-      this.log("文档列表为空");
-      return;
-    }
-
-    const index = this.docs.findIndex(doc => doc.id === dataNodeId);
-    if (index < 0) {
-      this.log("当前文档不在列表中:", dataNodeId);
-      return;
-    }
-    
-    this.log("降级方法找到文档，索引:", index + 1, "/", this.docs.length);
-
-    const container = this.createNavigationContainer(index);
-    // 将容器插入到 protyle 元素末尾，而不是 wysiwyg 内部
-    protyleElement.appendChild(container);
-    this.log("按钮已插入（降级方法）");
-  };
+  }
 }

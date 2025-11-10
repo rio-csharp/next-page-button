@@ -1,16 +1,24 @@
-﻿# Next Page Button
+﻿
+# Next Page Button
 
 English | [中文](./README_zh_CN.md)
 
 > Navigate through your documents sequentially with "Previous" and "Next" buttons at the bottom of each document.
 
+[![Version](https://img.shields.io/github/v/release/rio-csharp/next-page-button)](https://github.com/rio-csharp/next-page-button/releases)
+[![License](https://img.shields.io/github/license/rio-csharp/next-page-button)](LICENSE)
+[![Downloads](https://img.shields.io/github/downloads/rio-csharp/next-page-button/total)](https://github.com/rio-csharp/next-page-button/releases)
+
 ##  Features
 
 - **Sequential Navigation**: Browse documents in tree order with prev/next buttons
-- **Position Indicator**: See where you are (e.g., "5 / 20")
-- **Real-time Updates**: Automatically adapts to document changes
-- **Multi-notebook**: Works across all your opened notebooks
+- **Notebook Isolation**: Each notebook has independent page numbering
+- **Position Indicator**: Live display of your current position (e.g., "5 / 20")
+- **Adaptive Width**: Button container automatically matches document width
+- **Real-time Updates**: Instantly responds to document structure changes
+- **Smart Detection**: Automatically detects drag-and-drop reordering
 - **Theme Compatible**: Seamlessly integrates with SiYuan's UI
+- **Production Ready**: Comprehensive error handling, no memory leaks
 - **Zero Configuration**: Works out of the box
 
 ##  Installation
@@ -36,18 +44,25 @@ After installation, the plugin works automatically:
 1. Open any document
 2. Scroll to the bottom
 3. Use the navigation buttons to move between documents
-4. The page indicator shows your current position
+4. The page indicator shows your current position within the notebook
 
 **Button States:**
 -  **Active**: Blue buttons are clickable
--  **Disabled**: Gray buttons indicate first/last document
+-  **Disabled**: Gray buttons indicate first/last document in the notebook
 
-##  Real-time Updates
+**Key Features:**
+- Each notebook has independent page numbering
+- When you drag a document to reorder, navigation updates automatically
+- Button width adapts to document content width (respects SiYuan's adaptive width setting)
+
+##  Smart Updates
 
 The navigation automatically updates when you:
 - Create or delete documents
-- Move or rename documents
+- Move documents between folders
+- Rename documents
 - Reorder documents by dragging
+- Change adaptive width settings
 
 ##  Contributing
 
