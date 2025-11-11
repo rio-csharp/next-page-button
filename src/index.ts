@@ -1,6 +1,13 @@
 import { Plugin, openTab } from "siyuan";
 import "./index.scss";
 
+// 声明全局 Window 接口扩展
+declare global {
+  interface Window {
+    openFileByURL?: (url: string) => void;
+  }
+}
+
 interface DocItem {
   id: string;
   content: string;
@@ -12,6 +19,11 @@ const CONTAINER_ID = "page-nav-plugin-container";
 const CUSTOM_FULLWIDTH_ATTR = "custom-sy-fullwidth";
 const MAX_RECURSION_DEPTH = 50;
 const FETCH_TIMEOUT = 10000;
+
+// 检测是否为移动端
+const isMobile = () => {
+  return !!document.getElementById("sidebar") && window.siyuan?.config?.system?.container === "android";
+};
 
 export default class PageNavPlugin extends Plugin {
   private docs: DocItem[] = [];
@@ -225,6 +237,20 @@ export default class PageNavPlugin extends Plugin {
     return button;
   }
 
+  private openDocument(id: string): void {
+    if (isMobile()) {
+      // 移动端：使用 SiYuan 协议打开文档
+      if (window.openFileByURL) {
+        window.openFileByURL(`siyuan://blocks/${id}`);
+      } else {
+        console.error("[NextPageButton] window.openFileByURL not available");
+      }
+    } else {
+      // 桌面端：使用 openTab API
+      openTab({ app: this.app, doc: { id } });
+    }
+  }
+
   private async navigatePrev(currentDocId: string, notebookId: string): Promise<void> {
     if (this.isNavigating) return;
     
@@ -235,7 +261,7 @@ export default class PageNavPlugin extends Plugin {
       const currentIndex = notebookDocs.findIndex(doc => doc.id === currentDocId);
 
       if (currentIndex > 0) {
-        openTab({ app: this.app, doc: { id: notebookDocs[currentIndex - 1].id } });
+        this.openDocument(notebookDocs[currentIndex - 1].id);
       } else {
         await this.renderNavButtons();
       }
@@ -256,7 +282,7 @@ export default class PageNavPlugin extends Plugin {
       const currentIndex = notebookDocs.findIndex(doc => doc.id === currentDocId);
 
       if (currentIndex >= 0 && currentIndex < notebookDocs.length - 1) {
-        openTab({ app: this.app, doc: { id: notebookDocs[currentIndex + 1].id } });
+        this.openDocument(notebookDocs[currentIndex + 1].id);
       } else {
         await this.renderNavButtons();
       }

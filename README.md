@@ -1,7 +1,7 @@
 ﻿
 # Next Page Button
 
-English | [中文](./README_zh_CN.md)
+English | [中文](https://github.com/rio-csharp/next-page-button/blob/main/README_zh_CN.md)
 
 > Navigate through your documents sequentially with "Previous" and "Next" buttons at the bottom of each document.
 
@@ -66,8 +66,8 @@ The navigation automatically updates when you:
 
 ##  Contributing
 
-Contributions are welcome! Please see [DEVELOPMENT.md](DEVELOPMENT.md) for setup.
+Contributions are welcome! Please see [DEVELOPMENT.md](https://github.com/rio-csharp/next-page-button/blob/main/DEVELOPMENT.md) for setup.
 
 ##  License
 
-[MIT License](LICENSE)
+[MIT License](https://github.com/rio-csharp/next-page-button/blob/main/LICENSE)

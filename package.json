@@ -1,10 +1,10 @@
 {
   "name": "next-page-button",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Add navigation buttons to quickly browse previous and next documents",
-  "repository": "https://github.com/rio/next-page-button",
-  "homepage": "https://github.com/rio/next-page-button",
+  "repository": "https://github.com/rio-csharp/next-page-button",
+  "homepage": "https://github.com/rio-csharp/next-page-button",
   "author": "rio",
   "license": "MIT",
   "scripts": {

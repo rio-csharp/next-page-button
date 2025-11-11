@@ -158,7 +158,7 @@ git push origin v0.x.x
 
 ## 🤝 Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+See [CONTRIBUTING.md](https://github.com/rio-csharp/next-page-button/blob/main/CONTRIBUTING.md) for detailed guidelines.
 
 ### Quick Tips
 
@@ -205,7 +205,107 @@ pnpm update
 pnpm run build
 ```
 
-## 📚 Resources
+## � Android Development & Testing
+
+### Using MuMu Emulator for Plugin Testing
+
+**Prerequisites:**
+- MuMu emulator installed and running
+- ADB (Android Debug Bridge) installed
+- Rooted MuMu emulator (default)
+- SiYuan Android app installed in emulator
+
+**Setup ADB Connection:**
+```bash
+# Connect to MuMu emulator (default port: 16384)
+adb connect 127.0.0.1:16384
+
+# Or use the IP from emulator settings
+adb connect 192.168.2.107:5555
+
+# Verify connection
+adb devices
+```
+
+**Find SiYuan Workspace:**
+```bash
+# Locate SiYuan data directory
+adb shell "su -c 'find /storage/emulated/0/Android/data -name org.b3log.siyuan'"
+
+# Typical path:
+# /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan
+```
+
+**Deploy Plugin to Android:**
+```bash
+# 1. Build the plugin
+npm run build
+
+# 2. Push files to temporary location
+adb push dist/index.js /sdcard/index.js
+adb push dist/index.css /sdcard/index.css
+adb push dist/plugin.json /sdcard/plugin.json
+
+# 3. Copy to SiYuan plugins directory with root privileges
+adb shell "su -c 'mkdir -p /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/plugins/next-page-button'"
+adb shell "su -c 'cp /sdcard/index.js /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/plugins/next-page-button/'"
+adb shell "su -c 'cp /sdcard/index.css /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/plugins/next-page-button/'"
+adb shell "su -c 'cp /sdcard/plugin.json /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/plugins/next-page-button/'"
+
+# 4. Fix file ownership (SiYuan app UID: u0_a39)
+adb shell "su -c 'chown -R u0_a39:ext_data_rw /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/plugins/next-page-button'"
+
+# 5. Verify deployment
+adb shell "su -c 'ls -la /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/plugins/next-page-button'"
+```
+
+**Enable Plugin on Android:**
+```bash
+# Create plugin configuration file
+echo '[{"name":"next-page-button","displayName":"Next Page Button","enabled":true,"incompatible":false,"disabledInPublish":false}]' > petals.json
+
+# Deploy configuration
+adb push petals.json /sdcard/petals.json
+adb shell "su -c 'cp /sdcard/petals.json /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/storage/petal/petals.json'"
+adb shell "su -c 'chown u0_a39:ext_data_rw /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/data/storage/petal/petals.json'"
+```
+
+**Debugging:**
+```bash
+# View SiYuan logs
+adb shell "su -c 'tail -f /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/temp/siyuan.log'"
+
+# Monitor plugin loading
+adb shell "su -c 'tail -100 /storage/emulated/0/Android/data/org.b3log.siyuan/files/siyuan/temp/siyuan.log | grep -i petal'"
+
+# Real-time logcat monitoring
+adb logcat | grep -i "siyuan\|plugin"
+```
+
+**Quick Deployment Script:**
+
+A PowerShell script `deploy-android.ps1` is provided in the project root for quick deployment:
+
+```powershell
+# Run from project root
+.\deploy-android.ps1
+```
+
+The script will:
+1. Build the plugin
+2. Push files to device
+3. Install to SiYuan plugins directory
+4. Fix file permissions
+5. Verify installation
+
+**Important Notes:**
+- Android 11+ blocks direct access to `/Android/data/` without root
+- Always restart SiYuan app after plugin deployment
+- Use `window.openFileByURL()` for mobile navigation (not `openTab`)
+- Mobile DOM structure differs: editor is in `#editor` element
+- Ensure UTF-8 encoding without BOM for JSON files
+
+## �📚 Resources
 
 - [SiYuan Plugin API](https://github.com/siyuan-note/siyuan/blob/master/API.md)
 - [Plugin Sample](https://github.com/siyuan-note/plugin-sample)

@@ -1,9 +1,9 @@
 ﻿
 # 文档导航按钮
 
-[English](./README.md) | 中文
+[English](https://github.com/rio-csharp/next-page-button/blob/main/README.md) | 中文
 
-> 在文档底部添加「上一页」和「下一页」按钮，按文档树顺序浏览所有文档。
+> 在文档底部添加「上一页」和「下一页」按钮，按文档树顺序浏览所有文档.
 
 [![版本](https://img.shields.io/github/v/release/rio-csharp/next-page-button)](https://github.com/rio-csharp/next-page-button/releases)
 [![许可证](https://img.shields.io/github/license/rio-csharp/next-page-button)](LICENSE)
@@ -66,8 +66,8 @@
 
 ##  贡献
 
-欢迎提交 Issue 和 Pull Request！开发环境搭建请参考 [DEVELOPMENT.md](DEVELOPMENT.md)
+欢迎提交 Issue 和 Pull Request！开发环境搭建请参考 [DEVELOPMENT.md](https://github.com/rio-csharp/next-page-button/blob/main/DEVELOPMENT.md)
 
 ##  开源协议
 
-[MIT License](LICENSE)
+[MIT License](https://github.com/rio-csharp/next-page-button/blob/main/LICENSE)

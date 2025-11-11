@@ -32,7 +32,7 @@ Found a bug or have a feature request? Please [open an issue](https://github.com
 
 ### Development Setup
 
-See [DEVELOPMENT.md](DEVELOPMENT.md) for complete development guide.
+See [DEVELOPMENT.md](https://github.com/rio-csharp/next-page-button/blob/main/DEVELOPMENT.md) for complete development guide.
 
 ```bash
 pnpm install
