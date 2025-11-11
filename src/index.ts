@@ -1,7 +1,6 @@
 import { Plugin, openTab } from "siyuan";
 import "./index.scss";
 
-// 声明全局 Window 接口扩展
 declare global {
   interface Window {
     openFileByURL?: (url: string) => void;
@@ -20,7 +19,6 @@ const CUSTOM_FULLWIDTH_ATTR = "custom-sy-fullwidth";
 const MAX_RECURSION_DEPTH = 50;
 const FETCH_TIMEOUT = 10000;
 
-// 检测是否为移动端
 const isMobile = () => {
   return !!document.getElementById("sidebar") && window.siyuan?.config?.system?.container === "android";
 };
@@ -29,6 +27,8 @@ export default class PageNavPlugin extends Plugin {
   private docs: DocItem[] = [];
   private isLoadingDocs = false;
   private isNavigating = false;
+  private initialViewportHeight: number = 0;
+  private resizeObserver?: ResizeObserver;
 
   private getI18n(key: string): string {
     return this.i18n[key] || key;
@@ -43,6 +43,10 @@ export default class PageNavPlugin extends Plugin {
       this.eventBus.on("switch-protyle", this.handleDocumentSwitch);
       this.eventBus.on("loaded-protyle-dynamic", this.handleDocumentSwitch);
       this.eventBus.on("ws-main", this.handleWsMain);
+
+      if (isMobile()) {
+        this.setupKeyboardDetection();
+      }
     } catch (err) {
       console.error("[NextPageButton] Plugin load failed:", err);
     }
@@ -54,6 +58,18 @@ export default class PageNavPlugin extends Plugin {
       this.eventBus.off("switch-protyle", this.handleDocumentSwitch);
       this.eventBus.off("loaded-protyle-dynamic", this.handleDocumentSwitch);
       this.eventBus.off("ws-main", this.handleWsMain);
+      
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+        this.resizeObserver = undefined;
+      }
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", this.handleViewportResize);
+      } else {
+        window.removeEventListener("resize", this.handleViewportResize);
+      }
+      document.removeEventListener("focusin", this.handleEditorFocus);
+      document.removeEventListener("focusout", this.handleEditorBlur);
       
       document.querySelectorAll(`#${CONTAINER_ID}`).forEach(el => el.remove());
       
@@ -239,14 +255,12 @@ export default class PageNavPlugin extends Plugin {
 
   private openDocument(id: string): void {
     if (isMobile()) {
-      // 移动端：使用 SiYuan 协议打开文档
       if (window.openFileByURL) {
         window.openFileByURL(`siyuan://blocks/${id}`);
       } else {
         console.error("[NextPageButton] window.openFileByURL not available");
       }
     } else {
-      // 桌面端：使用 openTab API
       openTab({ app: this.app, doc: { id } });
     }
   }
@@ -360,5 +374,71 @@ export default class PageNavPlugin extends Plugin {
     } catch (err) {
       console.error("[NextPageButton] Render buttons failed:", err);
     }
+  }
+
+  private setupKeyboardDetection(): void {
+    this.initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", this.handleViewportResize);
+    } else {
+      window.addEventListener("resize", this.handleViewportResize);
+    }
+
+    this.setupFocusDetection();
+  }
+
+  private handleViewportResize = (): void => {
+    const currentHeight = window.visualViewport?.height || window.innerHeight;
+    const heightDiff = this.initialViewportHeight - currentHeight;
+    const isKeyboardVisible = heightDiff > 150;
+
+    this.toggleNavButtons(!isKeyboardVisible);
+  };
+
+  private setupFocusDetection(): void {
+    document.addEventListener("focusin", this.handleEditorFocus);
+    document.addEventListener("focusout", this.handleEditorBlur);
+  }
+
+  private handleEditorFocus = (e: FocusEvent): void => {
+    const target = e.target as HTMLElement;
+    
+    if (target && (
+      target.classList.contains("protyle-wysiwyg") ||
+      target.closest(".protyle-wysiwyg") ||
+      target.getAttribute("contenteditable") === "true"
+    )) {
+      setTimeout(() => {
+        const currentHeight = window.visualViewport?.height || window.innerHeight;
+        const heightDiff = this.initialViewportHeight - currentHeight;
+        const isKeyboardVisible = heightDiff > 150;
+        
+        if (isKeyboardVisible) {
+          this.toggleNavButtons(false);
+        }
+      }, 300);
+    }
+  };
+
+  private handleEditorBlur = (): void => {
+    setTimeout(() => {
+      const currentHeight = window.visualViewport?.height || window.innerHeight;
+      const heightDiff = this.initialViewportHeight - currentHeight;
+      const isKeyboardVisible = heightDiff > 150;
+      
+      if (!isKeyboardVisible) {
+        this.toggleNavButtons(true);
+      }
+    }, 300);
+  };
+
+  private toggleNavButtons(show: boolean): void {
+    const containers = document.querySelectorAll(`#${CONTAINER_ID}`);
+    containers.forEach((container: Element) => {
+      if (container instanceof HTMLElement) {
+        container.style.display = show ? "flex" : "none";
+      }
+    });
   }
 }
