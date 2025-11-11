@@ -17,6 +17,7 @@ English | [中文](https://github.com/rio-csharp/next-page-button/blob/main/READ
 - **Adaptive Width**: Button container automatically matches document width
 - **Real-time Updates**: Instantly responds to document structure changes
 - **Smart Detection**: Automatically detects drag-and-drop reordering
+- **Mobile Support**: Works perfectly on Android with keyboard auto-hide
 - **Theme Compatible**: Seamlessly integrates with SiYuan's UI
 - **Production Ready**: Comprehensive error handling, no memory leaks
 - **Zero Configuration**: Works out of the box
@@ -63,6 +64,14 @@ The navigation automatically updates when you:
 - Rename documents
 - Reorder documents by dragging
 - Change adaptive width settings
+
+##  Mobile Experience
+
+On Android devices, the plugin provides an optimized mobile experience:
+- Navigation buttons automatically hide when the virtual keyboard appears
+- Buttons restore when keyboard is dismissed
+- Uses native SiYuan mobile navigation API for smooth transitions
+- No interference with document editing
 
 ##  Contributing
 
