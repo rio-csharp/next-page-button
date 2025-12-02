@@ -32,6 +32,13 @@ export function errorLog(tag: string, ...args: any[]): void {
 }
 
 /**
+ * 警告日志 - 始终输出
+ */
+export function warnLog(tag: string, ...args: any[]): void {
+  console.warn(`[${getTimestamp()}][${tag}]`, ...args);
+}
+
+/**
  * 信息日志 - 始终输出
  */
 export function infoLog(tag: string, ...args: any[]): void {

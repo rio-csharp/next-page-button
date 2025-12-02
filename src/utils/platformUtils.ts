@@ -2,29 +2,39 @@
  * 平台相关工具函数
  */
 
+// 扩展 Window 接口，添加移动端特有属性
+declare global {
+  interface Window {
+    JSAndroid?: any;
+    JSHarmony?: any;
+    webkit?: {
+      messageHandlers?: any;
+    };
+  }
+}
+
 /**
- * 检测是否为移动端环境（支持 Android 和 iOS）
+ * 检测是否为移动端环境
+ * 移动端版本有 sidebar 元素，桌面端没有
+ * @returns true 表示移动端（Android、iOS、HarmonyOS），false 表示桌面端或浏览器
  */
 export function isMobile(): boolean {
-  const container = window.siyuan?.config?.system?.container;
-  return (
-    !!document.getElementById("sidebar") &&
-    (container === "android" || container === "ios")
-  );
+  // 参考 SiYuan 源码：siyuan/app/src/util/functions.ts
+  // 移动端版本存在 sidebar 元素，桌面端不存在
+  return !!document.getElementById("sidebar");
 }
 
 /**
- * 获取视口高度
+ * 检测是否为特定移动操作系统
  */
-export function getViewportHeight(): number {
-  return window.visualViewport?.height || window.innerHeight;
+export function isInAndroid(): boolean {
+  return window.siyuan?.config?.system?.container === "android" && !!window.JSAndroid;
 }
 
-/**
- * 检测键盘是否可见
- */
-export function isKeyboardVisible(initialHeight: number, threshold: number = 150): boolean {
-  const currentHeight = getViewportHeight();
-  const heightDiff = initialHeight - currentHeight;
-  return heightDiff > threshold;
+export function isInIOS(): boolean {
+  return window.siyuan?.config?.system?.container === "ios" && !!window.webkit?.messageHandlers;
+}
+
+export function isInHarmony(): boolean {
+  return window.siyuan?.config?.system?.container === "harmony" && !!window.JSHarmony;
 }

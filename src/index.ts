@@ -14,6 +14,11 @@ export default class PageNavPlugin extends Plugin {
   private keyboardDetectionService?: KeyboardDetectionService;
 
   private getI18n(key: string): string {
+    // 防御性检查：确保 i18n 对象存在
+    if (!this.i18n) {
+      errorLog("NextPageButton", "i18n object not initialized");
+      return key;
+    }
     return this.i18n[key] || key;
   }
   async onload() {
@@ -69,10 +74,10 @@ export default class PageNavPlugin extends Plugin {
   }
 
   private registerEventListeners(): void {
-    // 文档切换事件
+    // 文档切换事件 - 用户切换到不同的文档时触发
     this.eventBus.on("switch-protyle", this.handleDocumentSwitch);
     
-    // 编辑器加载完成事件
+    // 编辑器加载完成事件 - 静态编辑器加载完成时触发（例如打开只读文档）
     this.eventBus.on("loaded-protyle-static", this.handleDocumentSwitch);
   }
 
@@ -82,7 +87,13 @@ export default class PageNavPlugin extends Plugin {
   }
 
   // 文档切换处理：重新渲染导航按钮
+  // 使用箭头函数确保 this 上下文正确绑定，避免在事件回调中 this 指向错误
   private handleDocumentSwitch = async () => {
-    await this.uiRenderService.renderNavigationButtons();
+    try {
+      await this.uiRenderService.renderNavigationButtons();
+    } catch (err) {
+      // UIRenderService 内部已有错误处理，这里只是额外的保护层
+      errorLog("NextPageButton", "Document switch handling error:", err);
+    }
   };
 }

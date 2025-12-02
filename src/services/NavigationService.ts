@@ -1,10 +1,10 @@
 import { openTab } from "siyuan";
 import { isMobile } from "../utils/platformUtils";
-import { errorLog } from "../utils/logger";
+import { errorLog, warnLog } from "../utils/logger";
 
 declare global {
   interface Window {
-    openFileByURL?: (url: string) => void;
+    openFileByURL?: (url: string) => boolean;
   }
 }
 
@@ -17,12 +17,20 @@ export class NavigationService implements INavigationService {
 
   navigateToDocument(docId: string): void {
     if (isMobile()) {
-      if (window.openFileByURL) {
-        window.openFileByURL(`siyuan://blocks/${docId}`);
+      // 移动端使用 window.openFileByURL
+      // 参考：siyuan/app/src/mobile/index.ts
+      if (typeof window.openFileByURL === "function") {
+        const url = `siyuan://blocks/${docId}`;
+        const success = window.openFileByURL(url);
+        if (!success) {
+          warnLog("NavigationService", `Failed to open document: ${docId}`);
+        }
       } else {
-        errorLog("NavigationService", "window.openFileByURL not available");
+        // 浏览器环境或 openFileByURL 未初始化
+        errorLog("NavigationService", "window.openFileByURL not available in this environment");
       }
     } else {
+      // 桌面端使用 openTab
       openTab({ app: this.app, doc: { id: docId } });
     }
   }
