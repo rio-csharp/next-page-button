@@ -1,6 +1,6 @@
 {
   "name": "next-page-button",
-  "version": "0.1.3",
+  "version": "1.0.0",
   "type": "module",
   "description": "Add navigation buttons to quickly browse previous and next documents",
   "repository": "https://github.com/rio-csharp/next-page-button",
