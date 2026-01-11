@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-01-11
+
+### ✨ Added
+- **Configurable UI Margins**: Users can now set top and bottom margins for the navigation bar in the plugin settings.
+- **Manual Language Selection**: Added support for selecting between Auto (System), English, and Simplified Chinese.
+
+### 🏗️ Refactored
+- **Svelte-based UI**: Replaced manual DOM manipulation with Svelte components for more reliable and declarative UI rendering.
+- **Enhanced Service Architecture**: Extracted `SettingService` and `NavigationEventHandler` to further decouple plugin logic.
+- **Modular Directory Structure**: Organized UI-related services and components into a dedicated `src/services/ui` directory.
+
+### 🛠️ Fixed
+- **UI Stability**: Resolved an issue where navigation buttons would disappear when the editor lost focus during settings changes.
+- **Immediate Setting Updates**: Improved the setting save logic to ensure margin and language changes take effect immediately without a plugin restart.
+
+### 🎨 Improved
+- **Settings UI**: Re-designed numerical input fields with a more compact layout and automatic unit (px) management.
+
 ## [0.1.3] - 2025-12-02
 
 ### 🛠️ Changed
