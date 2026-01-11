@@ -14,6 +14,7 @@
     class="page-nav-button page-nav-button--prev b3-button b3-button--outline"
     disabled={isFirstPage}
     on:click|preventDefault|stopPropagation={onPrev}
+    aria-label={i18n("prevPage")}
   >
     <svg class="b3-button__icon"><use xlink:href="#iconLeft"></use></svg>
     {i18n("prevPage")}
@@ -27,6 +28,7 @@
     class="page-nav-button page-nav-button--next b3-button b3-button--outline"
     disabled={isLastPage}
     on:click|preventDefault|stopPropagation={onNext}
+    aria-label={i18n("nextPage")}
   >
     {i18n("nextPage")}
     <svg class="b3-button__icon"><use xlink:href="#iconRight"></use></svg>

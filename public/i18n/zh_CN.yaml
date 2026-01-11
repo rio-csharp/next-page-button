@@ -9,3 +9,7 @@ languageDesc: 手动选择插件界面语言（重启插件生效）
 languageAuto: 跟随系统
 languageEN: English
 languageZH: 简体中文
+layoutModeTitle: 布局方式
+layoutModeDesc: 选择翻页按钮的显示位置
+layoutModeBottom: 底部固定
+layoutModeSide: 左右悬浮

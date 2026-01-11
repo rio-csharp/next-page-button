@@ -11,10 +11,13 @@ export const KEYBOARD_THRESHOLD = 150;
 /**
  * 插件设置接口
  */
+export type LayoutMode = "bottom" | "side";
+
 export interface IPluginSettings {
   marginTop: string;
   marginBottom: string;
   language: string;
+  layoutMode: LayoutMode;
 }
 
 /**
@@ -24,6 +27,7 @@ export const DEFAULT_SETTINGS: IPluginSettings = {
   marginTop: "0",
   marginBottom: "0",
   language: "auto",
+  layoutMode: "bottom",
 };
 
 /**

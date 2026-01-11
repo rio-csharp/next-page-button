@@ -9,3 +9,7 @@ languageDesc: Manually select the plugin language (Restart required)
 languageAuto: Auto (System)
 languageEN: English
 languageZH: Chinese (Simplified)
+layoutModeTitle: Layout Mode
+layoutModeDesc: Choose where to display the navigation buttons
+layoutModeBottom: Bottom (Static)
+layoutModeSide: Side (Floating)

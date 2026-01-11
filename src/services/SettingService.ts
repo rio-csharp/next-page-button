@@ -55,6 +55,7 @@ export class SettingService {
     });
 
     this.addLanguageItem();
+    this.addLayoutModeItem();
     this.addMarginItem("marginTopTitle", "marginTopDesc", "marginTop");
     this.addMarginItem("marginBottomTitle", "marginBottomDesc", "marginBottom");
   }
@@ -85,6 +86,36 @@ export class SettingService {
           this.settings.language = select.value;
         };
         
+        return select;
+      }
+    });
+  }
+
+  private addLayoutModeItem() {
+    this.plugin.setting.addItem({
+      title: this.getI18nValue("layoutModeTitle"),
+      description: this.getI18nValue("layoutModeDesc"),
+      createActionElement: () => {
+        const select = document.createElement("select");
+        select.className = "b3-select fn__size-200";
+
+        const options = [
+          { value: "bottom", text: this.getI18nValue("layoutModeBottom") },
+          { value: "side", text: this.getI18nValue("layoutModeSide") }
+        ];
+
+        options.forEach(opt => {
+          const o = document.createElement("option");
+          o.value = opt.value;
+          o.text = opt.text;
+          if (this.settings.layoutMode === opt.value) o.selected = true;
+          select.appendChild(o);
+        });
+
+        select.onchange = () => {
+          this.settings.layoutMode = select.value as any;
+        };
+
         return select;
       }
     });

@@ -1,4 +1,5 @@
 import Navigation from "./Navigation.svelte";
+import SideNavigation from "./SideNavigation.svelte";
 import { debugLog, errorLog } from "../../utils/logger";
 import { IDocumentService } from "../DocumentService";
 import { INavigationService } from "../NavigationService";
@@ -13,9 +14,10 @@ export interface IUIRenderService {
 
 export class UIRenderService implements IUIRenderService {
   private renderAbortController: AbortController | null = null;
-  private svelteComponent: Navigation | null = null;
+  private svelteComponent: Navigation | SideNavigation | null = null;
   private eventHandler: NavigationEventHandler;
   private currentProtyleElement: HTMLElement | null = null;
+  private currentLayoutMode: string | null = null;
 
   constructor(
     private documentService: IDocumentService,
@@ -83,11 +85,22 @@ export class UIRenderService implements IUIRenderService {
         return;
       }
 
-      // 如果 Protyle 元素变了，或者组件还没创建，则重新创建
-      if (this.currentProtyleElement !== protyleElement || !this.svelteComponent) {
+      const settings = this.getSettings();
+      const layoutMode = settings.layoutMode || "bottom";
+      const ComponentClass = layoutMode === "side" ? SideNavigation : Navigation;
+
+      // 如果 Protyle 元素变了，或者组件还没创建，或者布局模式变了，则重新创建
+      if (this.currentProtyleElement !== protyleElement || !this.svelteComponent || this.currentLayoutMode !== layoutMode) {
         this.cleanup();
         this.currentProtyleElement = protyleElement;
-        this.svelteComponent = new Navigation({
+        this.currentLayoutMode = layoutMode;
+        
+        // 侧边模式下确保父容器有 relative 定位
+        if (layoutMode === "side" && protyleElement.style.position !== "relative") {
+          protyleElement.style.position = "relative";
+        }
+
+        this.svelteComponent = new ComponentClass({
           target: protyleElement,
           props: {
             currentPosition,
@@ -96,8 +109,8 @@ export class UIRenderService implements IUIRenderService {
             onPrev: () => this.eventHandler.handleNavigate(-1),
             onNext: () => this.eventHandler.handleNavigate(1)
           }
-        });
-        debugLog("UIRender", "Svelte component mounted");
+        }) as any;
+        debugLog("UIRender", `Svelte component mounted (${layoutMode})`);
       } else {
         // 否则只更新属性
         this.svelteComponent.$set({
@@ -123,7 +136,7 @@ export class UIRenderService implements IUIRenderService {
    */
   private applyStyles(): void {
     const settings = this.getSettings();
-    if (this.currentProtyleElement) {
+    if (this.currentProtyleElement && settings.layoutMode !== "side") {
       const container = this.currentProtyleElement.querySelector("#page-nav-plugin-container") as HTMLElement;
       if (container) {
         // 后台逻辑自动补全 px 单位
@@ -147,13 +160,14 @@ export class UIRenderService implements IUIRenderService {
       this.svelteComponent = null;
     }
     this.currentProtyleElement = null;
+    this.currentLayoutMode = null;
   }
 
   toggleVisibility(show: boolean): void {
     if (this.currentProtyleElement) {
-      const container = this.currentProtyleElement.querySelector("#page-nav-plugin-container") as HTMLElement;
+      const container = this.currentProtyleElement.querySelector("#page-nav-plugin-container, #page-nav-side-container") as HTMLElement;
       if (container) {
-        container.style.display = show ? "flex" : "none";
+        container.style.display = show ? (container.id === "page-nav-side-container" ? "block" : "flex") : "none";
       }
     }
   }
