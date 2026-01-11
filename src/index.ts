@@ -5,7 +5,7 @@ import { infoLog, errorLog } from "./utils/logger";
 import { DocumentService } from "./services/DocumentService";
 import { KeyboardDetectionService } from "./services/KeyboardDetectionService";
 import { NavigationService } from "./services/NavigationService";
-import { UIRenderService } from "./services/UIRenderService";
+import { UIRenderService } from "./services/ui/UIRenderService";
 
 export default class PageNavPlugin extends Plugin {
   private documentService!: DocumentService;

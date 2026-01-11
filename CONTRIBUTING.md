@@ -36,7 +36,8 @@ See [DEVELOPMENT.md](https://github.com/rio-csharp/next-page-button/blob/main/DE
 
 ```bash
 pnpm install
-pnpm run make-link
+pnpm run make-link       # macOS/Linux
+pnpm run make-link-win   # Windows
 pnpm run dev
 ```
 

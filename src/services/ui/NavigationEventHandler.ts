@@ -35,7 +35,7 @@ export class NavigationEventHandler {
   /**
    * 处理导航
    */
-  private async handleNavigate(offset: number): Promise<void> {
+  public async handleNavigate(offset: number): Promise<void> {
     if (this.isNavigating) return;
 
     this.isNavigating = true;

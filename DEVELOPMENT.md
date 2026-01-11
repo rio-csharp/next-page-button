@@ -28,9 +28,12 @@ Set `DEBUG_MODE = true` in `src/utils/constants.ts` for detailed logs. **Always 
 src/
 ├── index.ts                    # Plugin entry point
 ├── services/
-│   ├── DocumentService.ts      # Document tree & position tracking
-│   ├── NavigationService.ts    # Platform-specific navigation
-│   ├── UIRenderService.ts      # UI rendering & state management
+│   ├── ui/
+│   │   ├── Navigation.svelte       # Svelte navigation component
+│   │   ├── NavigationEventHandler.ts # Navigation click handlers
+│   │   └── UIRenderService.ts      # UI lifecycle & Svelte coordination
+│   ├── DocumentService.ts          # Document tree & position tracking
+│   ├── NavigationService.ts        # Platform-specific navigation
 │   └── KeyboardDetectionService.ts  # Mobile keyboard detection
 ├── utils/
 │   ├── constants.ts            # Configuration (DEBUG_MODE here)
@@ -42,11 +45,13 @@ src/
 
 ## 🏗️ Architecture
 
-**Service-Oriented Design (SOA)**
+**Service-Oriented Design (SOA) with Svelte-based UI**
 
 - **DocumentService**: Document tree loading, position tracking, notebook queries
 - **NavigationService**: Desktop (`openTab`) vs Mobile (`window.openFileByURL`)
-- **UIRenderService**: UI lifecycle, button states, AbortController for cleanup
+- **UIRenderService**: Manages the lifecycle of the `Navigation.svelte` component
+- **Navigation.svelte**: Declarative UI for navigation buttons and page indicator
+- **NavigationEventHandler**: Decoupled logic for handling navigation triggers
 - **KeyboardDetectionService**: Mobile-only, auto-hide buttons when keyboard shows
 
 **Key Features**
