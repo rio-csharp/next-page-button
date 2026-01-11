@@ -28,7 +28,10 @@ export class UIRenderService implements IUIRenderService {
 
   async renderNavigationButtons(force = false): Promise<void> {
     const renderStartTime = Date.now();
-    debugLog("UIRender", "=== Render Start ===");
+    debugLog("UIRender", `=== Render Start (force: ${force}) ===`);
+    
+    // 强制刷新时特殊处理：保留当前元素引用，防止设置对话框开启时焦点丢失导致找不到 Protyle
+    const savedProtyle = this.currentProtyleElement;
     
     if (this.renderAbortController) {
       this.renderAbortController.abort();
@@ -38,21 +41,28 @@ export class UIRenderService implements IUIRenderService {
     const signal = this.renderAbortController.signal;
 
     try {
-      // 如果强制重绘，先清理旧组件
-      if (force) {
-        this.cleanup();
+      // 如果强制重绘，仅销毁组件，保留 currentProtyleElement 引用
+      if (force && this.svelteComponent) {
+        this.svelteComponent.$destroy();
+        this.svelteComponent = null;
       }
 
-      const docId = this.documentService.getCurrentDocumentId();
-      if (!docId) {
+      let docId = this.documentService.getCurrentDocumentId();
+      
+      if (signal.aborted) return;
+
+      const protyleElement = this.getActiveProtyleElement() || savedProtyle;
+      if (!protyleElement) {
         this.cleanup();
         return;
       }
 
-      if (signal.aborted) return;
+      // 如果通过常规方式没拿到 docId（常见于设置对话框打开时），从 DOM 元素中提取
+      if (!docId && protyleElement) {
+        docId = protyleElement.querySelector('.protyle-wysiwyg')?.getAttribute('data-node-id') || null;
+      }
 
-      const protyleElement = this.getActiveProtyleElement();
-      if (!protyleElement) {
+      if (!docId) {
         this.cleanup();
         return;
       }
