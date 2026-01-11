@@ -5,6 +5,7 @@ import { errorLog } from "../utils/logger";
 export class SettingService {
   private settings: IPluginSettings = DEFAULT_SETTINGS;
   private manualI18n: any = null;
+  private onUpdateCallback: () => Promise<void> = null;
 
   constructor(private plugin: Plugin) {}
 
@@ -40,6 +41,14 @@ export class SettingService {
    * 初始化思源设置菜单
    */
   init(onUpdate: () => Promise<void>) {
+    this.onUpdateCallback = onUpdate;
+    this.rebuildSetting();
+  }
+
+  /**
+   * 构建并重新构建设置界面以响应语言切换
+   */
+  private rebuildSetting() {
     this.plugin.setting = new Setting({
       confirmCallback: async () => {
         // 保存前处理语言逻辑
@@ -50,7 +59,13 @@ export class SettingService {
         }
         
         await this.plugin.saveData("settings.json", this.settings);
-        await onUpdate();
+        
+        // 关键：重新构建设置项，这样下次打开时就是最新语言
+        this.rebuildSetting();
+        
+        if (this.onUpdateCallback) {
+          await this.onUpdateCallback();
+        }
       }
     });
 
@@ -157,10 +172,17 @@ export class SettingService {
       const response = await fetch(`/plugins/next-page-button/i18n/${lang}.yaml`);
       const text = await response.text();
       const data: any = {};
-      text.split('\n').forEach(line => {
-        const parts = line.split(':');
-        if (parts.length >= 2) {
-          data[parts[0].trim()] = parts.slice(1).join(':').trim();
+      
+      // 更健壮的 YAML 简单解析
+      text.split(/\r?\n/).forEach(line => {
+        const colonIndex = line.indexOf(':');
+        if (colonIndex > -1) {
+          const key = line.substring(0, colonIndex).trim();
+          const value = line.substring(colonIndex + 1).trim();
+          if (key) {
+            // 处理可能的引号包裹
+            data[key] = value.replace(/^["'](.*)["']$/, '$1');
+          }
         }
       });
       this.manualI18n = data;

@@ -5,7 +5,7 @@ marginTopDesc: 设置导航栏与其上方文档内容之间的距离（例如�
 marginBottomTitle: 下边距
 marginBottomDesc: 设置导航栏底部的间距（例如：30px）
 languageTitle: 语言设置
-languageDesc: 手动选择插件界面语言（重启插件生效）
+languageDesc: 手动选择插件界面语言
 languageAuto: 跟随系统
 languageEN: English
 languageZH: 简体中文

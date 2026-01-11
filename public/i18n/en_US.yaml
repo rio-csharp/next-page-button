@@ -5,7 +5,7 @@ marginTopDesc: Set the distance between the navigation bar and the document cont
 marginBottomTitle: Bottom Margin
 marginBottomDesc: Set the spacing at the bottom of the navigation bar (e.g., 30px)
 languageTitle: Language
-languageDesc: Manually select the plugin language (Restart required)
+languageDesc: Manually select the plugin language
 languageAuto: Auto (System)
 languageEN: English
 languageZH: Chinese (Simplified)
