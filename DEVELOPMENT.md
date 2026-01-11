@@ -34,6 +34,7 @@ src/
 │   │   └── UIRenderService.ts      # UI lifecycle & Svelte coordination
 │   ├── DocumentService.ts          # Document tree & position tracking
 │   ├── NavigationService.ts        # Platform-specific navigation
+│   ├── SettingService.ts           # Settings & I18n management
 │   └── KeyboardDetectionService.ts  # Mobile keyboard detection
 ├── utils/
 │   ├── constants.ts            # Configuration (DEBUG_MODE here)

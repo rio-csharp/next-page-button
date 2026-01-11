@@ -14,6 +14,7 @@ export const KEYBOARD_THRESHOLD = 150;
 export interface IPluginSettings {
   marginTop: string;
   marginBottom: string;
+  language: string;
 }
 
 /**
@@ -22,6 +23,7 @@ export interface IPluginSettings {
 export const DEFAULT_SETTINGS: IPluginSettings = {
   marginTop: "0",
   marginBottom: "0",
+  language: "auto",
 };
 
 /**
