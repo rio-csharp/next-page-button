@@ -1,15 +1,12 @@
 import { openTab } from "siyuan";
 import { isMobile } from "../utils/platformUtils";
 import { errorLog, warnLog } from "../utils/logger";
+import { INavigationService } from "./INavigationService";
 
 declare global {
   interface Window {
     openFileByURL?: (url: string) => boolean;
   }
-}
-
-export interface INavigationService {
-  navigateToDocument(docId: string): void;
 }
 
 export class NavigationService implements INavigationService {

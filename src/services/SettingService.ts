@@ -1,8 +1,9 @@
 import { Plugin, Setting } from "siyuan";
 import { DEFAULT_SETTINGS, IPluginSettings } from "../utils/constants";
 import { errorLog } from "../utils/logger";
+import { ISettingService } from "./ISettingService";
 
-export class SettingService {
+export class SettingService implements ISettingService {
   private settings: IPluginSettings = DEFAULT_SETTINGS;
   private manualI18n: any = null;
   private onUpdateCallback: () => Promise<void> = null;
@@ -65,33 +66,30 @@ export class SettingService {
     this.addMarginItem("marginBottomTitle", "marginBottomDesc", "marginBottom");
   }
 
+  private createSelect(options: { value: string, text: string }[], currentValue: string, onChange: (value: string) => void) {
+    const select = document.createElement("select");
+    select.className = "b3-select fn__size-200";
+    options.forEach(opt => {
+      const o = document.createElement("option");
+      o.value = opt.value;
+      o.text = opt.text;
+      if (currentValue === opt.value) o.selected = true;
+      select.appendChild(o);
+    });
+    select.onchange = () => onChange(select.value);
+    return select;
+  }
+
   private addLanguageItem() {
     this.plugin.setting.addItem({
       title: this.getI18nValue("languageTitle"),
       description: this.getI18nValue("languageDesc"),
       createActionElement: () => {
-        const select = document.createElement("select");
-        select.className = "b3-select fn__size-200";
-        
-        const options = [
+        return this.createSelect([
           { value: "auto", text: this.getI18nValue("languageAuto") },
           { value: "zh_CN", text: this.getI18nValue("languageZH") },
           { value: "en_US", text: this.getI18nValue("languageEN") }
-        ];
-        
-        options.forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt.value;
-          o.text = opt.text;
-          if (this.settings.language === opt.value) o.selected = true;
-          select.appendChild(o);
-        });
-        
-        select.onchange = () => {
-          this.settings.language = select.value;
-        };
-        
-        return select;
+        ], this.settings.language, (val) => { this.settings.language = val; });
       }
     });
   }
@@ -101,27 +99,10 @@ export class SettingService {
       title: this.getI18nValue("layoutModeTitle"),
       description: this.getI18nValue("layoutModeDesc"),
       createActionElement: () => {
-        const select = document.createElement("select");
-        select.className = "b3-select fn__size-200";
-
-        const options = [
+        return this.createSelect([
           { value: "bottom", text: this.getI18nValue("layoutModeBottom") },
           { value: "side", text: this.getI18nValue("layoutModeSide") }
-        ];
-
-        options.forEach(opt => {
-          const o = document.createElement("option");
-          o.value = opt.value;
-          o.text = opt.text;
-          if (this.settings.layoutMode === opt.value) o.selected = true;
-          select.appendChild(o);
-        });
-
-        select.onchange = () => {
-          this.settings.layoutMode = select.value as any;
-        };
-
-        return select;
+        ], this.settings.layoutMode, (val) => { this.settings.layoutMode = val as any; });
       }
     });
   }

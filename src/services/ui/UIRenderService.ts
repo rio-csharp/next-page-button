@@ -5,6 +5,7 @@ import { IDocumentService } from "../DocumentService";
 import { INavigationService } from "../NavigationService";
 import { NavigationEventHandler } from "./NavigationEventHandler";
 import { IPluginSettings } from "../../utils/constants";
+import { DomUtils } from "../../utils/domUtils";
 
 export interface IUIRenderService {
   renderNavigationButtons(force?: boolean): Promise<void>;
@@ -168,8 +169,6 @@ export class UIRenderService implements IUIRenderService {
   }
 
   private getActiveProtyleElement(): HTMLElement | null {
-    const protyleTitle = document.querySelector(".protyle:not(.fn__none) .protyle-title");
-    const protyleContent = document.querySelector(".protyle:not(.fn__none) .protyle-content");
-    return (protyleTitle || protyleContent)?.closest(".protyle") as HTMLElement | null;
+    return DomUtils.getActiveProtyleElement();
   }
 }

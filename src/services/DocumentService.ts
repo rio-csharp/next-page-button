@@ -1,6 +1,7 @@
 import { FileTreeNode } from "../models/DocItem";
 import { API_ENDPOINTS, MAX_RECURSION_DEPTH } from "../utils/constants";
 import { debugLog, errorLog } from "../utils/logger";
+import { DomUtils } from "../utils/domUtils";
 
 export interface IDocumentService {
   getCurrentDocumentId(): string | null;
@@ -20,35 +21,8 @@ export interface IDocumentService {
  */
 export class DocumentService implements IDocumentService {
   getCurrentDocumentId(): string | null {
-    // Priority: current selection in editor
-    const range = window.getSelection()?.rangeCount > 0 ? window.getSelection().getRangeAt(0) : null;
-    let protyleElement: HTMLElement | null = null;
-    
-    if (range) {
-      protyleElement = range.startContainer.parentElement?.closest('.protyle:not(.fn__none)') as HTMLElement;
-    }
-    
-    if (!protyleElement) {
-      // Fallback: active tab
-      protyleElement = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)') as HTMLElement;
-    }
-    
-    if (!protyleElement) {
-      // Fallback: any visible protyle
-      protyleElement = document.querySelector('.protyle:not(.fn__none)') as HTMLElement;
-    }
-    
-    if (!protyleElement) {
-      return null;
-    }
-    
-    // Extract rootID from protyle-title or protyle-wysiwyg
-    const titleElement = protyleElement.querySelector('.protyle-title[data-node-id]');
-    const wysiwygElement = protyleElement.querySelector('.protyle-wysiwyg[data-node-id]');
-    
-    return titleElement?.getAttribute('data-node-id') || 
-           wysiwygElement?.getAttribute('data-node-id') || 
-           null;
+    const protyle = DomUtils.getActiveProtyleElement();
+    return protyle ? DomUtils.getDocIdFromProtyle(protyle) : null;
   }
 
   async getNotebookIdByDocId(docId: string): Promise<string | null> {

@@ -2,18 +2,20 @@ import { Plugin } from "siyuan";
 import "./index.scss";
 import { isMobile } from "./utils/platformUtils";
 import { infoLog, errorLog } from "./utils/logger";
-import { DocumentService } from "./services/DocumentService";
-import { KeyboardDetectionService } from "./services/KeyboardDetectionService";
+import { DocumentService, IDocumentService } from "./services/DocumentService";
+import { KeyboardDetectionService, IKeyboardDetectionService } from "./services/KeyboardDetectionService";
 import { NavigationService } from "./services/NavigationService";
-import { UIRenderService } from "./services/ui/UIRenderService";
+import { INavigationService } from "./services/INavigationService";
+import { UIRenderService, IUIRenderService } from "./services/ui/UIRenderService";
 import { SettingService } from "./services/SettingService";
+import { ISettingService } from "./services/ISettingService";
 
 export default class PageNavPlugin extends Plugin {
-  private documentService!: DocumentService;
-  private navigationService!: NavigationService;
-  private uiRenderService!: UIRenderService;
-  private settingService!: SettingService;
-  private keyboardDetectionService?: KeyboardDetectionService;
+  private documentService!: IDocumentService;
+  private navigationService!: INavigationService;
+  private uiRenderService!: IUIRenderService;
+  private settingService!: ISettingService;
+  private keyboardDetectionService?: IKeyboardDetectionService;
 
   async onload() {
     try {
