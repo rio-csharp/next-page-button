@@ -1,16 +1,9 @@
-/**
- * 常量定义
- */
-
 export const CONTAINER_ID = "page-nav-plugin-container";
 export const CUSTOM_FULLWIDTH_ATTR = "custom-sy-fullwidth";
 export const MAX_RECURSION_DEPTH = 50;
 export const FETCH_TIMEOUT = 10000;
 export const KEYBOARD_THRESHOLD = 150;
 
-/**
- * 插件设置接口
- */
 export type LayoutMode = "bottom" | "side";
 
 export interface IPluginSettings {
@@ -20,9 +13,6 @@ export interface IPluginSettings {
   layoutMode: LayoutMode;
 }
 
-/**
- * 默认设置
- */
 export const DEFAULT_SETTINGS: IPluginSettings = {
   marginTop: "0",
   marginBottom: "0",
@@ -31,15 +21,12 @@ export const DEFAULT_SETTINGS: IPluginSettings = {
 };
 
 /**
- * 调试选项
- * 设置为 true 以在控制台输出详细日志，用于开发调试
- * 发布版本应设置为 false
+ * Debug options
+ * Set to true to output detailed logs to the console for development.
+ * Should be set to false for production releases.
  */
 export const DEBUG_MODE = false;
 
-/**
- * CSS类名常量
- */
 export const CSS_CLASSES = {
   container: "page-nav-plugin-container",
   indicator: "page-nav-indicator",
@@ -51,17 +38,11 @@ export const CSS_CLASSES = {
   b3ButtonIcon: "b3-button__icon"
 } as const;
 
-/**
- * SVG图标ID
- */
 export const ICONS = {
   left: "#iconLeft",
   right: "#iconRight"
 } as const;
 
-/**
- * API端点
- */
 export const API_ENDPOINTS = {
   listDocsByPath: "/api/filetree/listDocsByPath"
 } as const;

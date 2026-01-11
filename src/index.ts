@@ -17,20 +17,16 @@ export default class PageNavPlugin extends Plugin {
 
   async onload() {
     try {
-      // 1. 初始化设置服务
       this.settingService = new SettingService(this);
       await this.settingService.load();
 
-      // 2. 初始化核心服务
       this.initializeServices();
       
-      // 3. 初始化设置菜单
       this.settingService.init(async () => {
-        // 传入 true 强制重绘组件，确保语言切换立即生效
+        // Redraw component to apply setting changes (like language or layout) immediately
         await this.uiRenderService.renderNavigationButtons(true);
       });
 
-      // 4. 执行初始渲染
       await this.uiRenderService.renderNavigationButtons();
 
       this.registerEventListeners();

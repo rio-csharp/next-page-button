@@ -9,9 +9,6 @@ export class SettingService {
 
   constructor(private plugin: Plugin) {}
 
-  /**
-   * 加载设置并初始化语言
-   */
   async load() {
     this.settings = Object.assign(
       {},
@@ -28,39 +25,32 @@ export class SettingService {
     return this.settings;
   }
 
-  /**
-   * 获取翻译文字
-   */
   getI18nValue(key: string): string {
     const targetI18n = this.manualI18n || this.plugin.i18n;
     if (!targetI18n) return key;
     return targetI18n[key] || key;
   }
 
-  /**
-   * 初始化思源设置菜单
-   */
   init(onUpdate: () => Promise<void>) {
     this.onUpdateCallback = onUpdate;
     this.rebuildSetting();
   }
 
   /**
-   * 构建并重新构建设置界面以响应语言切换
+   * Builds or rebuilds the setting interface to respond to language changes.
    */
   private rebuildSetting() {
     this.plugin.setting = new Setting({
       confirmCallback: async () => {
-        // 保存前处理语言逻辑
         if (this.settings.language !== "auto") {
           await this.loadLanguageData(this.settings.language);
         } else {
-          this.manualI18n = null; // 切换回自动则清空手动语言包
+          this.manualI18n = null; // Clear manual i18n when switching back to auto
         }
         
         await this.plugin.saveData("settings.json", this.settings);
         
-        // 关键：重新构建设置项，这样下次打开时就是最新语言
+        // Rebuild settings items so that the next time the dialog opens, it uses the new language
         this.rebuildSetting();
         
         if (this.onUpdateCallback) {
@@ -173,14 +163,14 @@ export class SettingService {
       const text = await response.text();
       const data: any = {};
       
-      // 更健壮的 YAML 简单解析
+      // Basic robust YAML parser
       text.split(/\r?\n/).forEach(line => {
         const colonIndex = line.indexOf(':');
         if (colonIndex > -1) {
           const key = line.substring(0, colonIndex).trim();
           const value = line.substring(colonIndex + 1).trim();
           if (key) {
-            // 处理可能的引号包裹
+            // Remove quotes if present
             data[key] = value.replace(/^["'](.*)["']$/, '$1');
           }
         }

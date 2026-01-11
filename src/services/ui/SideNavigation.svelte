@@ -39,7 +39,7 @@
     right: 0;
     bottom: 0;
     pointer-events: none;
-    z-index: 10; // 确保在编辑器内容之上但可能在某些浮窗之下
+    z-index: 10; // Above editor content, but potentially below some floating windows
   }
 
   .page-nav-side-button {

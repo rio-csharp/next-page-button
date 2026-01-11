@@ -1,11 +1,5 @@
-/**
- * 日志工具
- */
 import { DEBUG_MODE } from "./constants";
 
-/**
- * 格式化时间戳
- */
 function getTimestamp(): string {
   const now = new Date();
   const hours = String(now.getHours()).padStart(2, '0');
@@ -16,7 +10,7 @@ function getTimestamp(): string {
 }
 
 /**
- * 调试日志 - 仅在 DEBUG_MODE 为 true 时输出
+ * Debug log - only outputs when DEBUG_MODE is true
  */
 export function debugLog(tag: string, ...args: any[]): void {
   if (DEBUG_MODE) {
@@ -24,23 +18,14 @@ export function debugLog(tag: string, ...args: any[]): void {
   }
 }
 
-/**
- * 错误日志 - 始终输出
- */
 export function errorLog(tag: string, ...args: any[]): void {
   console.error(`[${getTimestamp()}][${tag}]`, ...args);
 }
 
-/**
- * 警告日志 - 始终输出
- */
 export function warnLog(tag: string, ...args: any[]): void {
   console.warn(`[${getTimestamp()}][${tag}]`, ...args);
 }
 
-/**
- * 信息日志 - 始终输出
- */
 export function infoLog(tag: string, ...args: any[]): void {
   console.log(`[${getTimestamp()}][${tag}]`, ...args);
 }

@@ -32,7 +32,7 @@ export class UIRenderService implements IUIRenderService {
     const renderStartTime = Date.now();
     debugLog("UIRender", `=== Render Start (force: ${force}) ===`);
     
-    // 强制刷新时特殊处理：保留当前元素引用，防止设置对话框开启时焦点丢失导致找不到 Protyle
+    // Save current element to avoid losing reference when focus shifts (e.g., settings dialog opens)
     const savedProtyle = this.currentProtyleElement;
     
     if (this.renderAbortController) {
@@ -43,7 +43,6 @@ export class UIRenderService implements IUIRenderService {
     const signal = this.renderAbortController.signal;
 
     try {
-      // 如果强制重绘，仅销毁组件，保留 currentProtyleElement 引用
       if (force && this.svelteComponent) {
         this.svelteComponent.$destroy();
         this.svelteComponent = null;
@@ -59,7 +58,7 @@ export class UIRenderService implements IUIRenderService {
         return;
       }
 
-      // 如果通过常规方式没拿到 docId（常见于设置对话框打开时），从 DOM 元素中提取
+      // If docId is missing (common when dialog is open), extract from target element
       if (!docId && protyleElement) {
         docId = protyleElement.querySelector('.protyle-wysiwyg')?.getAttribute('data-node-id') || null;
       }
@@ -89,13 +88,12 @@ export class UIRenderService implements IUIRenderService {
       const layoutMode = settings.layoutMode || "bottom";
       const ComponentClass = layoutMode === "side" ? SideNavigation : Navigation;
 
-      // 如果 Protyle 元素变了，或者组件还没创建，或者布局模式变了，则重新创建
+      // Re-initialize if the protyle element changes, component doesn't exist, or layout mode changes
       if (this.currentProtyleElement !== protyleElement || !this.svelteComponent || this.currentLayoutMode !== layoutMode) {
         this.cleanup();
         this.currentProtyleElement = protyleElement;
         this.currentLayoutMode = layoutMode;
         
-        // 侧边模式下确保父容器有 relative 定位
         if (layoutMode === "side" && protyleElement.style.position !== "relative") {
           protyleElement.style.position = "relative";
         }
@@ -112,7 +110,6 @@ export class UIRenderService implements IUIRenderService {
         }) as any;
         debugLog("UIRender", `Svelte component mounted (${layoutMode})`);
       } else {
-        // 否则只更新属性
         this.svelteComponent.$set({
           currentPosition,
           totalCount
@@ -120,7 +117,6 @@ export class UIRenderService implements IUIRenderService {
         debugLog("UIRender", "Svelte component props updated");
       }
 
-      // 动态应用由设置决定的间距 (CSS 变量)
       this.applyStyles();
       
       debugLog("UIRender", `=== Render Complete (${Date.now() - renderStartTime}ms) ===`);
@@ -132,14 +128,13 @@ export class UIRenderService implements IUIRenderService {
   }
 
   /**
-   * 应用动态样式（外边距等）
+   * Apply dynamic styles such as margins.
    */
   private applyStyles(): void {
     const settings = this.getSettings();
     if (this.currentProtyleElement && settings.layoutMode !== "side") {
       const container = this.currentProtyleElement.querySelector("#page-nav-plugin-container") as HTMLElement;
       if (container) {
-        // 后台逻辑自动补全 px 单位
         const marginTop = settings.marginTop ? `${settings.marginTop}px` : "0px";
         const marginBottom = settings.marginBottom ? `${settings.marginBottom}px` : "0px";
         

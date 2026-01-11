@@ -10,9 +10,6 @@ export class NavigationEventHandler {
     private navigationService: INavigationService
   ) {}
 
-  /**
-   * 创建上一页处理器
-   */
   createPrevHandler(): EventListener {
     return (e: Event) => {
       e.preventDefault();
@@ -21,9 +18,6 @@ export class NavigationEventHandler {
     };
   }
 
-  /**
-   * 创建下一页处理器
-   */
   createNextHandler(): EventListener {
     return (e: Event) => {
       e.preventDefault();
@@ -32,9 +26,6 @@ export class NavigationEventHandler {
     };
   }
 
-  /**
-   * 处理导航
-   */
   public async handleNavigate(offset: number): Promise<void> {
     if (this.isNavigating) return;
 
@@ -49,7 +40,6 @@ export class NavigationEventHandler {
       const currentPosition = await this.documentService.getCurrentDocumentPosition(currentDocId);
       const targetPosition = currentPosition + offset;
 
-      // 获取目标文档并导航
       const targetDocId = await this.documentService.getDocumentIdByPosition(
         notebookId,
         targetPosition

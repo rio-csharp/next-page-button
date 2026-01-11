@@ -1,6 +1,5 @@
 /**
- * 文件树节点模型
- * 用于 DocumentService 递归加载文件树结构时的类型注解
+ * File tree node model used for DocumentService when recursively loading file tree structure.
  */
 export interface FileTreeNode {
   id: string;

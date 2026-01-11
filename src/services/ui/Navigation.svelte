@@ -36,6 +36,4 @@
 </div>
 
 <style lang="scss">
-  // 样式保持在 index.scss 中或迁移至此均可
-  // 建议保留在 index.scss 以维持全局一致性，或在这里写组件特定样式
 </style>

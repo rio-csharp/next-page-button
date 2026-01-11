@@ -1,8 +1,8 @@
 /**
- * 平台相关工具函数
+ * Platform utilities
  */
 
-// 扩展 Window 接口，添加移动端特有属性
+// Extend Window interface for mobile properties
 declare global {
   interface Window {
     JSAndroid?: any;
@@ -14,19 +14,15 @@ declare global {
 }
 
 /**
- * 检测是否为移动端环境
- * 移动端版本有 sidebar 元素，桌面端没有
- * @returns true 表示移动端（Android、iOS、HarmonyOS），false 表示桌面端或浏览器
+ * Checks if the current environment is mobile.
+ * Mobile versions have a sidebar element, while desktop versions do not.
+ * @returns true if mobile (Android, iOS, HarmonyOS), false otherwise
  */
 export function isMobile(): boolean {
-  // 参考 SiYuan 源码：siyuan/app/src/util/functions.ts
-  // 移动端版本存在 sidebar 元素，桌面端不存在
+  // Reference SiYuan source: siyuan/app/src/util/functions.ts
   return !!document.getElementById("sidebar");
 }
 
-/**
- * 检测是否为特定移动操作系统
- */
 export function isInAndroid(): boolean {
   return window.siyuan?.config?.system?.container === "android" && !!window.JSAndroid;
 }

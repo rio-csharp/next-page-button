@@ -11,33 +11,30 @@ export interface IDocumentService {
 }
 
 /**
- * 文档服务
+ * Document Service
  * 
- * 设计说明：
- * - 不使用缓存机制，每次都实时查询文档列表
- * - 原因：思源笔记是本地应用，查询性能不是瓶颈
- * - 实时性更重要：用户添加/删除文档后，页码需要立即更新
- * - 如果使用缓存，会导致用户操作后页码不准确（延迟问题）
+ * Design Notes:
+ * - Documents are queried in real-time without caching.
+ * - Reasons: Local app performance is sufficient, and real-time accuracy is critical 
+ *   when documents are added/deleted.
  */
 export class DocumentService implements IDocumentService {
   getCurrentDocumentId(): string | null {
-    // 参考思源源码 src/plugin/API.ts 中的 getActiveEditor 方法
-    // 优先从当前选区所在的编辑器获取
+    // Priority: current selection in editor
     const range = window.getSelection()?.rangeCount > 0 ? window.getSelection().getRangeAt(0) : null;
     let protyleElement: HTMLElement | null = null;
     
     if (range) {
-      // 如果有选区，找到选区所在的 protyle
       protyleElement = range.startContainer.parentElement?.closest('.protyle:not(.fn__none)') as HTMLElement;
     }
     
     if (!protyleElement) {
-      // 如果没有选区或找不到，找活动窗口中的 protyle
+      // Fallback: active tab
       protyleElement = document.querySelector('.layout__wnd--active .protyle:not(.fn__none)') as HTMLElement;
     }
     
     if (!protyleElement) {
-      // 最后尝试找任何可见的 protyle
+      // Fallback: any visible protyle
       protyleElement = document.querySelector('.protyle:not(.fn__none)') as HTMLElement;
     }
     
@@ -45,7 +42,7 @@ export class DocumentService implements IDocumentService {
       return null;
     }
     
-    // 从 protyle-title 或 protyle-wysiwyg 获取 data-node-id（这就是 rootID）
+    // Extract rootID from protyle-title or protyle-wysiwyg
     const titleElement = protyleElement.querySelector('.protyle-title[data-node-id]');
     const wysiwygElement = protyleElement.querySelector('.protyle-wysiwyg[data-node-id]');
     
@@ -82,10 +79,7 @@ export class DocumentService implements IDocumentService {
     try {
       debugLog("DocumentService", `Getting document count for notebook: ${notebookId}`);
       
-      // 重要：使用 /api/filetree/listDocsByPath 获取实时文档数量
-      // ListDocTree 直接读取文件系统，确保获取最新数据（不依赖数据库事务队列）
-      // SQL API 有延迟问题：事务队列异步处理，可能有 50-60ms 延迟
-      // 参考：siyuan/kernel/model/file.go:233 ListDocTree()
+      // Use /api/filetree/listDocsByPath for real-time count to avoid SQL sync latency (~50-60ms).
       const docIds = await this.loadDocumentIdList(notebookId);
       const count = docIds.length;
       debugLog("DocumentService", `Document count: ${count}`);
@@ -97,13 +91,8 @@ export class DocumentService implements IDocumentService {
   }
 
   /**
-   * 获取文档在其所属笔记本中的位置（从1开始）
-   * 
-   * 重要：位置顺序遵循文档树的排序规则
-   * - /api/filetree/listDocsByPath 会根据笔记本配置的排序方式返回
-   * - 支持所有排序模式：文件名、修改时间、自定义排序等
-   * - 不传 sort 参数时，API 自动使用笔记本的排序配置
-   * - 参考：siyuan/kernel/model/file.go:233 ListDocTree()
+   * Get document position within notebook (1-indexed).
+   * Note: Order follows document tree rules (filename, modified time, or custom sort).
    */
   async getCurrentDocumentPosition(docId: string): Promise<number> {
     try {
@@ -122,16 +111,11 @@ export class DocumentService implements IDocumentService {
   }
 
   /**
-   * 根据笔记本ID和位置获取文档ID
+   * Get document ID by notebook ID and position.
    * 
-   * @param notebookId 笔记本ID
-   * @param position 文档位置（从1开始，1表示第一个文档）
-   * @returns 文档ID，如果位置无效则返回边界文档
-   * 
-   * 边界处理：
-   * - position <= 0：返回第一个文档
-   * - position > 文档总数：返回最后一个文档
-   * - 空笔记本：返回 null
+   * @param notebookId Notebook ID
+   * @param position Document position (1-indexed)
+   * @returns Document ID, or boundary document if position is out of range
    */
   async getDocumentIdByPosition(notebookId: string, position: number): Promise<string | null> {
     try {
@@ -140,8 +124,7 @@ export class DocumentService implements IDocumentService {
         return null;
       }
       
-      // 将位置转换为数组索引（position 从 1 开始，index 从 0 开始）
-      // 使用边界限制确保索引在有效范围内 [0, docIds.length - 1]
+      // Boundary handling: restrict index to [0, docIds.length - 1]
       const index = Math.max(0, Math.min(position - 1, docIds.length - 1));
       return docIds[index];
     } catch (err) {
@@ -151,12 +134,7 @@ export class DocumentService implements IDocumentService {
   }
 
   /**
-   * 加载笔记本的文档ID列表
-   * 
-   * 重要：每次都重新加载，不使用缓存
-   * - 确保获取最新的文档树结构
-   * - 用户添加/删除/移动文档后立即生效
-   * - 本地查询性能足够快（通常 < 100ms）
+   * Load document ID list for notebook. Queries in real-time without caching.
    */
   private async loadDocumentIdList(notebookId: string): Promise<string[]> {
     const loadStartTime = Date.now();
@@ -182,14 +160,12 @@ export class DocumentService implements IDocumentService {
     }
 
     try {
-      // fetchFileTree 返回的文件已按笔记本配置的排序规则排序
-      // API 会自动处理各种排序模式（文件名、修改时间、自定义排序等）
+      // API handles sorting automatically based on notebook settings
       const files = await this.fetchFileTree(notebookId, path);
 
       for (const file of files) {
         if (!file.id) continue;
 
-        // 按顺序保存文档ID，保持与文档树显示顺序一致
         result.push(file.id);
 
         if (file.subFileCount > 0) {
@@ -203,10 +179,7 @@ export class DocumentService implements IDocumentService {
 
   private async fetchFileTree(notebookId: string, path: string): Promise<FileTreeNode[]> {
     try {
-      // 重要：不传 sort 参数，让 API 使用笔记本配置的排序规则
-      // ListDocTree 会自动读取笔记本的 sortMode 配置
-      // 这样可以确保与用户在文档树中看到的顺序完全一致
-      // 参考：siyuan/kernel/model/file.go:259-262
+      // API uses the notebook's default sort mode when sort parameter is omitted.
       const response = await fetch(API_ENDPOINTS.listDocsByPath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
