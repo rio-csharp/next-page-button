@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-01-11
+
+### ✨ Added
+- **Side Floating Layout**: New modern navigation mode with floating buttons on the left/right sides of the editor.
+- **Layout Switcher**: Toggle between Bottom Static and Side Floating layouts in the plugin settings.
+
+### 🏗️ Refactored
+- **Service Interface Unification**: Standardized project architecture using clear interfaces for all services.
+- **English Documentation**: Migrated all code comments and core documentation to English for broader accessibility.
+- **Decoupled DOM Utilities**: Extracted core editor logic into `DomUtils` to improve cross-window reliability.
+- **Optimized Setting Service**: Streamlined the setting reconstruction process to enable immediate UI and i18n updates.
+
+### 🛠️ Fixed
+- **YAML Parser Robustness**: Improved parsing of internationalization files to handle special characters and quotes more effectively.
+
 ## [1.1.0] - 2026-01-11
 
 ### ✨ Added
