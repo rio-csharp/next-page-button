@@ -57,6 +57,7 @@ src/
 **Key Features**
 - Per-notebook page numbering
 - Real-time updates (no caching)
+- Configurable UI (dynamic margins via settings)
 - Memory leak prevention (proper cleanup)
 - AbortController for async operations
 - Platform detection for mobile/desktop

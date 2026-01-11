@@ -9,6 +9,22 @@ export const FETCH_TIMEOUT = 10000;
 export const KEYBOARD_THRESHOLD = 150;
 
 /**
+ * 插件设置接口
+ */
+export interface IPluginSettings {
+  marginTop: string;
+  marginBottom: string;
+}
+
+/**
+ * 默认设置
+ */
+export const DEFAULT_SETTINGS: IPluginSettings = {
+  marginTop: "0",
+  marginBottom: "0",
+};
+
+/**
  * 调试选项
  * 设置为 true 以在控制台输出详细日志，用于开发调试
  * 发布版本应设置为 false

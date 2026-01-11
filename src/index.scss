@@ -5,7 +5,7 @@
   gap: 12px;
   width: 100%;
   max-width: var(--b3-width-protyle-wysiwyg);
-  margin: 0px auto 0;
+  margin: var(--page-nav-margin-top, 0px) auto var(--page-nav-margin-bottom, 0px);
   padding: 0px 0;
   border-top: 1px solid var(--b3-theme-surface-lighter);
   box-sizing: border-box;

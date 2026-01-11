@@ -3,6 +3,7 @@ import { debugLog, errorLog } from "../../utils/logger";
 import { IDocumentService } from "../DocumentService";
 import { INavigationService } from "../NavigationService";
 import { NavigationEventHandler } from "./NavigationEventHandler";
+import { IPluginSettings } from "../../utils/constants";
 
 export interface IUIRenderService {
   renderNavigationButtons(): Promise<void>;
@@ -19,7 +20,8 @@ export class UIRenderService implements IUIRenderService {
   constructor(
     private documentService: IDocumentService,
     navigationService: INavigationService,
-    private i18n: (key: string) => string
+    private i18n: (key: string) => string,
+    private getSettings: () => IPluginSettings
   ) {
     this.eventHandler = new NavigationEventHandler(documentService, navigationService);
   }
@@ -89,12 +91,33 @@ export class UIRenderService implements IUIRenderService {
         });
         debugLog("UIRender", "Svelte component props updated");
       }
+
+      // 动态应用由设置决定的间距 (CSS 变量)
+      this.applyStyles();
       
       debugLog("UIRender", `=== Render Complete (${Date.now() - renderStartTime}ms) ===`);
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       errorLog("UIRenderService", "Render failed:", err);
       this.cleanup();
+    }
+  }
+
+  /**
+   * 应用动态样式（外边距等）
+   */
+  private applyStyles(): void {
+    const settings = this.getSettings();
+    if (this.currentProtyleElement) {
+      const container = this.currentProtyleElement.querySelector("#page-nav-plugin-container") as HTMLElement;
+      if (container) {
+        // 后台逻辑自动补全 px 单位
+        const marginTop = settings.marginTop ? `${settings.marginTop}px` : "0px";
+        const marginBottom = settings.marginBottom ? `${settings.marginBottom}px` : "0px";
+        
+        container.style.setProperty("--page-nav-margin-top", marginTop);
+        container.style.setProperty("--page-nav-margin-bottom", marginBottom);
+      }
     }
   }
 

@@ -1,2 +1,6 @@
 prevPage: Previous
 nextPage: Next
+marginTopTitle: Top Margin
+marginTopDesc: Set the distance between the navigation bar and the document content above (e.g., 20px)
+marginBottomTitle: Bottom Margin
+marginBottomDesc: Set the spacing at the bottom of the navigation bar (e.g., 30px)
