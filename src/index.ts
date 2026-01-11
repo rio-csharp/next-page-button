@@ -26,7 +26,8 @@ export default class PageNavPlugin extends Plugin {
       
       // 3. 初始化设置菜单
       this.settingService.init(async () => {
-        await this.uiRenderService.renderNavigationButtons();
+        // 传入 true 强制重绘组件，确保语言切换立即生效
+        await this.uiRenderService.renderNavigationButtons(true);
       });
 
       // 4. 执行初始渲染

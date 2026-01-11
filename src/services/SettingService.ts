@@ -42,6 +42,13 @@ export class SettingService {
   init(onUpdate: () => Promise<void>) {
     this.plugin.setting = new Setting({
       confirmCallback: async () => {
+        // 保存前处理语言逻辑
+        if (this.settings.language !== "auto") {
+          await this.loadLanguageData(this.settings.language);
+        } else {
+          this.manualI18n = null; // 切换回自动则清空手动语言包
+        }
+        
         await this.plugin.saveData("settings.json", this.settings);
         await onUpdate();
       }

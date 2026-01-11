@@ -6,7 +6,7 @@ import { NavigationEventHandler } from "./NavigationEventHandler";
 import { IPluginSettings } from "../../utils/constants";
 
 export interface IUIRenderService {
-  renderNavigationButtons(): Promise<void>;
+  renderNavigationButtons(force?: boolean): Promise<void>;
   cleanup(): void;
   toggleVisibility(show: boolean): void;
 }
@@ -26,7 +26,7 @@ export class UIRenderService implements IUIRenderService {
     this.eventHandler = new NavigationEventHandler(documentService, navigationService);
   }
 
-  async renderNavigationButtons(): Promise<void> {
+  async renderNavigationButtons(force = false): Promise<void> {
     const renderStartTime = Date.now();
     debugLog("UIRender", "=== Render Start ===");
     
@@ -38,6 +38,11 @@ export class UIRenderService implements IUIRenderService {
     const signal = this.renderAbortController.signal;
 
     try {
+      // 如果强制重绘，先清理旧组件
+      if (force) {
+        this.cleanup();
+      }
+
       const docId = this.documentService.getCurrentDocumentId();
       if (!docId) {
         this.cleanup();
