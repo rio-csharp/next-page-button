@@ -8,6 +8,7 @@ export class SettingService implements ISettingService {
   private settings: IPluginSettings = DEFAULT_SETTINGS;
   private manualI18n: Record<string, string> | null = null;
   private onUpdateCallback: (() => Promise<void>) | null = null;
+  private marginActionElements = new Set<HTMLElement>();
 
   constructor(private plugin: Plugin) {}
 
@@ -39,6 +40,8 @@ export class SettingService implements ISettingService {
    * Builds or rebuilds the setting interface to respond to language changes.
    */
   private rebuildSetting() {
+    this.marginActionElements.clear();
+
     this.plugin.setting = new Setting({
       confirmCallback: async () => {
         if (this.settings.language !== "auto") {
@@ -105,7 +108,10 @@ export class SettingService implements ISettingService {
         return this.createSelect([
           { value: "bottom", text: this.getI18nValue("layoutModeBottom") },
           { value: "side", text: this.getI18nValue("layoutModeSide") }
-        ], this.settings.layoutMode, (val: LayoutMode) => { this.settings.layoutMode = val; });
+        ], this.settings.layoutMode, (val: LayoutMode) => {
+          this.settings.layoutMode = val;
+          this.updateMarginItemsVisibility();
+        });
       }
     });
   }
@@ -134,6 +140,8 @@ export class SettingService implements ISettingService {
       createActionElement: () => {
         const container = document.createElement("div");
         container.className = "fn__flex fn__flex-center";
+        container.dataset.pageNavMarginItem = settingKey;
+        this.marginActionElements.add(container);
         
         const input = document.createElement("input");
         input.className = "b3-text-field fn__size-60"; 
@@ -154,9 +162,20 @@ export class SettingService implements ISettingService {
         
         container.appendChild(input);
         container.appendChild(label);
+
+        window.setTimeout(() => this.updateMarginItemsVisibility());
         return container;
       }
     });
+  }
+
+  private updateMarginItemsVisibility(): void {
+    for (const element of this.marginActionElements) {
+      const settingRow = element.closest(".b3-label") as HTMLElement | null;
+      if (settingRow) {
+        settingRow.style.display = this.settings.layoutMode === "bottom" ? "" : "none";
+      }
+    }
   }
 
   private async loadLanguageData(lang: LanguageMode) {
