@@ -13,3 +13,5 @@ layoutModeTitle: Layout Mode
 layoutModeDesc: Choose where to display the navigation buttons
 layoutModeBottom: Bottom (Static)
 layoutModeSide: Side (Floating)
+closeCurrentTabTitle: Close Current Tab
+closeCurrentTabDesc: Close the previous document tab after navigating to the target document

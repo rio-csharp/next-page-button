@@ -1,6 +1,6 @@
 import Navigation from "./Navigation.svelte";
 import SideNavigation from "./SideNavigation.svelte";
-import type { IProtyle } from "siyuan";
+import type { IProtyle, Tab } from "siyuan";
 import { debugLog, errorLog } from "../../utils/logger";
 import type { IDocumentService } from "../DocumentService";
 import type { INavigationService } from "../INavigationService";
@@ -41,6 +41,9 @@ export class UIRenderService implements IUIRenderService {
   private currentLayoutMode: string | null = null;
   private originalProtylePosition: string | null = null;
   private currentDocumentId: string | null = null;
+  private currentSourceTab: Tab | null = null;
+  private pendingProtyleElement: HTMLElement | null = null;
+  private renderSequence = 0;
 
   constructor(
     private documentService: IDocumentService,
@@ -48,10 +51,19 @@ export class UIRenderService implements IUIRenderService {
     private i18n: (key: string) => string,
     private getSettings: () => IPluginSettings
   ) {
-    this.eventHandler = new NavigationEventHandler(documentService, navigationService);
+    this.eventHandler = new NavigationEventHandler(
+      documentService,
+      navigationService,
+      () => this.getSettings().closeCurrentTab
+    );
   }
 
   async renderNavigationButtons(force = false, protyle?: IProtyle): Promise<void> {
+    if (protyle && !protyle.element.isConnected) {
+      return;
+    }
+
+    const renderId = ++this.renderSequence;
     const renderStartTime = Date.now();
     debugLog("UIRender", `=== Render Start (force: ${force}) ===`);
     
@@ -79,6 +91,7 @@ export class UIRenderService implements IUIRenderService {
         this.cleanup();
         return;
       }
+      this.pendingProtyleElement = protyleElement;
 
       // If docId is missing (common when dialog is open), extract from target element
       if (!docId && protyleElement) {
@@ -111,6 +124,7 @@ export class UIRenderService implements IUIRenderService {
         this.currentProtyleElement = protyleElement;
         this.currentLayoutMode = layoutMode;
         this.currentDocumentId = docId;
+        this.currentSourceTab = protyle?.model?.parent ?? null;
         
         if (layoutMode === "side" && protyleElement.style.position !== "relative") {
           this.originalProtylePosition = protyleElement.style.position;
@@ -123,13 +137,14 @@ export class UIRenderService implements IUIRenderService {
             currentPosition,
             totalCount,
             i18n: this.i18n,
-            onPrev: () => this.eventHandler.handleNavigate(-1, this.currentDocumentId),
-            onNext: () => this.eventHandler.handleNavigate(1, this.currentDocumentId)
+            onPrev: () => this.eventHandler.handleNavigate(-1, this.currentDocumentId, this.currentSourceTab),
+            onNext: () => this.eventHandler.handleNavigate(1, this.currentDocumentId, this.currentSourceTab)
           }
         });
         debugLog("UIRender", `Svelte component mounted (${layoutMode})`);
       } else {
         this.currentDocumentId = docId;
+        this.currentSourceTab = protyle?.model?.parent ?? this.currentSourceTab;
         this.svelteComponent.$set({
           currentPosition,
           totalCount
@@ -144,12 +159,21 @@ export class UIRenderService implements IUIRenderService {
       if (err instanceof Error && err.name === 'AbortError') return;
       errorLog("UIRenderService", "Render failed:", err);
       this.cleanup();
+    } finally {
+      if (this.renderSequence === renderId) {
+        this.pendingProtyleElement = null;
+      }
     }
   }
 
   cleanupProtyle(protyle: IProtyle): void {
-    if (this.currentProtyleElement === protyle.element) {
+    if (this.pendingProtyleElement === protyle.element) {
       this.cleanup();
+      return;
+    }
+
+    if (this.currentProtyleElement === protyle.element) {
+      this.destroyMountedComponent();
     }
   }
 
@@ -193,6 +217,8 @@ export class UIRenderService implements IUIRenderService {
     this.currentProtyleElement = null;
     this.currentLayoutMode = null;
     this.currentDocumentId = null;
+    this.currentSourceTab = null;
+    this.pendingProtyleElement = null;
   }
 
   toggleVisibility(show: boolean): void {

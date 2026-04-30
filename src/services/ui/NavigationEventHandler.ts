@@ -1,4 +1,5 @@
 import { errorLog } from "../../utils/logger";
+import type { Tab } from "siyuan";
 import type { IDocumentService } from "../DocumentService";
 import type { INavigationService } from "../INavigationService";
 
@@ -7,7 +8,8 @@ export class NavigationEventHandler {
 
   constructor(
     private documentService: IDocumentService,
-    private navigationService: INavigationService
+    private navigationService: INavigationService,
+    private shouldCloseCurrentTab: () => boolean
   ) {}
 
   createPrevHandler(): EventListener {
@@ -26,7 +28,11 @@ export class NavigationEventHandler {
     };
   }
 
-  public async handleNavigate(offset: number, docId?: string | null): Promise<void> {
+  public async handleNavigate(
+    offset: number,
+    docId?: string | null,
+    sourceTab?: Tab | null
+  ): Promise<void> {
     if (this.isNavigating) return;
 
     this.isNavigating = true;
@@ -36,7 +42,10 @@ export class NavigationEventHandler {
 
       const targetDocId = await this.documentService.getDocumentIdByOffset(currentDocId, offset);
       if (targetDocId) {
-        this.navigationService.navigateToDocument(targetDocId);
+        await this.navigationService.navigateToDocument(targetDocId, {
+          closeCurrentTab: this.shouldCloseCurrentTab(),
+          sourceTab
+        });
       }
     } catch (err) {
       errorLog("NavigationEventHandler", "Navigate failed:", err);

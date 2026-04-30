@@ -16,6 +16,7 @@ export default class PageNavPlugin extends Plugin {
   private navigationService!: INavigationService;
   private uiRenderService!: IUIRenderService;
   private settingService!: ISettingService;
+  private stabilizeRenderTimer: number | null = null;
 
   async onload() {
     try {
@@ -42,6 +43,7 @@ export default class PageNavPlugin extends Plugin {
   onunload() {
     try {
       this.unregisterEventListeners();
+      this.clearStabilizeRenderTimer();
 
       this.uiRenderService.cleanup();
 
@@ -79,8 +81,11 @@ export default class PageNavPlugin extends Plugin {
   }
 
   private handleDocumentSwitch = async (event?: CustomEvent<{ protyle: IProtyle }>) => {
+    const protyle = event?.detail?.protyle;
+
     try {
-      await this.uiRenderService.renderNavigationButtons(false, event?.detail?.protyle);
+      await this.uiRenderService.renderNavigationButtons(false, protyle);
+      this.scheduleStabilizeRender(protyle);
     } catch (err) {
       errorLog("NextPageButton", "Document switch handling error:", err);
     }
@@ -97,4 +102,29 @@ export default class PageNavPlugin extends Plugin {
   private handleMobileKeyboardHide = () => {
     this.uiRenderService.toggleVisibility(true);
   };
+
+  private scheduleStabilizeRender(protyle?: IProtyle): void {
+    this.clearStabilizeRenderTimer();
+
+    this.stabilizeRenderTimer = window.setTimeout(async () => {
+      this.stabilizeRenderTimer = null;
+
+      if (protyle && !protyle.element.isConnected) {
+        return;
+      }
+
+      try {
+        await this.uiRenderService.renderNavigationButtons(false, protyle);
+      } catch (err) {
+        errorLog("NextPageButton", "Stabilized render failed:", err);
+      }
+    }, 120);
+  }
+
+  private clearStabilizeRenderTimer(): void {
+    if (this.stabilizeRenderTimer !== null) {
+      window.clearTimeout(this.stabilizeRenderTimer);
+      this.stabilizeRenderTimer = null;
+    }
+  }
 }

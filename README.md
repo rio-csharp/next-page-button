@@ -24,6 +24,7 @@ English | [中文](https://github.com/rio-csharp/next-page-button/blob/main/READ
 
 Go to Plugin Settings to customize:
 - **Layout Mode**: Toggle between Bottom or Side navigation.
+- **Tab Behavior**: Optionally close the previous document tab after page navigation.
 - **Margins**: Adjust spacing for the bottom layout.
 - **Language**: Manual override or auto-detect system language.
 

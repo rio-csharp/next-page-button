@@ -60,6 +60,7 @@ export class SettingService implements ISettingService {
 
     this.addLanguageItem();
     this.addLayoutModeItem();
+    this.addCloseCurrentTabItem();
     this.addMarginItem("marginTopTitle", "marginTopDesc", "marginTop");
     this.addMarginItem("marginBottomTitle", "marginBottomDesc", "marginBottom");
   }
@@ -105,6 +106,23 @@ export class SettingService implements ISettingService {
           { value: "bottom", text: this.getI18nValue("layoutModeBottom") },
           { value: "side", text: this.getI18nValue("layoutModeSide") }
         ], this.settings.layoutMode, (val: LayoutMode) => { this.settings.layoutMode = val; });
+      }
+    });
+  }
+
+  private addCloseCurrentTabItem() {
+    this.plugin.setting.addItem({
+      title: this.getI18nValue("closeCurrentTabTitle"),
+      description: this.getI18nValue("closeCurrentTabDesc"),
+      createActionElement: () => {
+        const input = document.createElement("input");
+        input.className = "b3-switch fn__flex-center";
+        input.type = "checkbox";
+        input.checked = this.settings.closeCurrentTab;
+        input.onchange = () => {
+          this.settings.closeCurrentTab = input.checked;
+        };
+        return input;
       }
     });
   }
@@ -167,7 +185,8 @@ export class SettingService implements ISettingService {
       marginTop: this.normalizePixelValue(savedSettings?.marginTop),
       marginBottom: this.normalizePixelValue(savedSettings?.marginBottom),
       language: language === "zh_CN" || language === "en_US" ? language : DEFAULT_SETTINGS.language,
-      layoutMode: layoutMode === "side" || layoutMode === "bottom" ? layoutMode : DEFAULT_SETTINGS.layoutMode
+      layoutMode: layoutMode === "side" || layoutMode === "bottom" ? layoutMode : DEFAULT_SETTINGS.layoutMode,
+      closeCurrentTab: savedSettings?.closeCurrentTab === true
     };
   }
 

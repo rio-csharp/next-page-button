@@ -13,3 +13,5 @@ layoutModeTitle: 布局方式
 layoutModeDesc: 选择翻页按钮的显示位置
 layoutModeBottom: 底部固定
 layoutModeSide: 左右悬浮
+closeCurrentTabTitle: 关闭当前标签页
+closeCurrentTabDesc: 翻页后关闭原来的文档标签页，仅保留目标文档

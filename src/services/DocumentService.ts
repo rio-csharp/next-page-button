@@ -1,5 +1,5 @@
 import type { FileTreeNode } from "../models/DocItem";
-import { API_ENDPOINTS, MAX_RECURSION_DEPTH } from "../utils/constants";
+import { API_ENDPOINTS, MAX_RECURSION_DEPTH, NAVIGATION_CACHE_TTL } from "../utils/constants";
 import { debugLog, errorLog } from "../utils/logger";
 import { DomUtils } from "../utils/domUtils";
 import type { BlockInfo, ISiYuanApiClient, ListDocsByPathResult } from "./SiYuanApiClient";
@@ -17,15 +17,28 @@ export interface DocumentNavigationInfo {
   totalCount: number;
 }
 
+interface NotebookIdCacheEntry {
+  notebookId: string;
+  expiresAt: number;
+}
+
+interface DocumentListCacheEntry {
+  docIds: string[];
+  expiresAt: number;
+}
+
 /**
  * Document Service
  * 
  * Design Notes:
- * - Documents are queried in real-time without caching.
- * - Reasons: Local app performance is sufficient, and real-time accuracy is critical 
- *   when documents are added/deleted.
+ * - Document order is cached briefly to keep repeated page navigation responsive.
+ * - The short TTL preserves near-real-time accuracy after document tree changes.
  */
 export class DocumentService implements IDocumentService {
+  private notebookIdCache = new Map<string, NotebookIdCacheEntry>();
+  private documentListCache = new Map<string, DocumentListCacheEntry>();
+  private documentListRequests = new Map<string, Promise<string[]>>();
+
   constructor(private apiClient: ISiYuanApiClient = new SiYuanApiClient()) {}
 
   getCurrentDocumentId(): string | null {
@@ -34,11 +47,17 @@ export class DocumentService implements IDocumentService {
   }
 
   private async getNotebookIdByDocId(docId: string): Promise<string | null> {
+    const cachedNotebookId = this.getCachedNotebookId(docId);
+    if (cachedNotebookId) {
+      return cachedNotebookId;
+    }
+
     try {
       debugLog("DocumentService", `Getting notebook ID for doc: ${docId}`);
 
       const data = await this.apiClient.post<BlockInfo>(API_ENDPOINTS.getBlockInfo, { id: docId });
       if (data?.box) {
+        this.cacheNotebookId(docId, data.box);
         debugLog("DocumentService", `Found notebook ID: ${data.box}`);
         return data.box;
       }
@@ -91,13 +110,35 @@ export class DocumentService implements IDocumentService {
   }
 
   /**
-   * Load document ID list for notebook. Queries in real-time without caching.
+   * Load document ID list for notebook. Uses a short cache to make continuous navigation fast.
    */
   private async loadDocumentIdList(notebookId: string): Promise<string[]> {
+    const cachedDocIds = this.getCachedDocumentIds(notebookId);
+    if (cachedDocIds) {
+      return cachedDocIds;
+    }
+
+    const pendingRequest = this.documentListRequests.get(notebookId);
+    if (pendingRequest) {
+      return pendingRequest;
+    }
+
+    const request = this.fetchDocumentIdList(notebookId);
+    this.documentListRequests.set(notebookId, request);
+
+    try {
+      return await request;
+    } finally {
+      this.documentListRequests.delete(notebookId);
+    }
+  }
+
+  private async fetchDocumentIdList(notebookId: string): Promise<string[]> {
     const loadStartTime = Date.now();
     debugLog("DocumentService", `Loading document ID list for notebook: ${notebookId}`);
     const docIds: string[] = [];
     await this.loadDocIdsFromPath(notebookId, "/", docIds);
+    this.cacheDocumentIds(notebookId, docIds);
     const loadTime = Date.now() - loadStartTime;
     debugLog("DocumentService", `Loaded ${docIds.length} document IDs in ${loadTime}ms`);
     debugLog("DocumentService", `Doc IDs: [${docIds.join(", ")}]`);
@@ -145,6 +186,48 @@ export class DocumentService implements IDocumentService {
     } catch (err) {
       errorLog("DocumentService", "Failed to fetch file tree:", err);
       return [];
+    }
+  }
+
+  private getCachedNotebookId(docId: string): string | null {
+    const cacheEntry = this.notebookIdCache.get(docId);
+    if (!cacheEntry || cacheEntry.expiresAt <= Date.now()) {
+      this.notebookIdCache.delete(docId);
+      return null;
+    }
+
+    return cacheEntry.notebookId;
+  }
+
+  private cacheNotebookId(docId: string, notebookId: string): void {
+    this.notebookIdCache.set(docId, {
+      notebookId,
+      expiresAt: Date.now() + NAVIGATION_CACHE_TTL
+    });
+  }
+
+  private getCachedDocumentIds(notebookId: string): string[] | null {
+    const cacheEntry = this.documentListCache.get(notebookId);
+    if (!cacheEntry || cacheEntry.expiresAt <= Date.now()) {
+      this.documentListCache.delete(notebookId);
+      return null;
+    }
+
+    return cacheEntry.docIds;
+  }
+
+  private cacheDocumentIds(notebookId: string, docIds: string[]): void {
+    const expiresAt = Date.now() + NAVIGATION_CACHE_TTL;
+    this.documentListCache.set(notebookId, {
+      docIds,
+      expiresAt
+    });
+
+    for (const docId of docIds) {
+      this.notebookIdCache.set(docId, {
+        notebookId,
+        expiresAt
+      });
     }
   }
 }
