@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-04-30
+
+### ✨ Added
+- **Close Current Tab Option**: Added an optional setting to close the previous document tab after page navigation.
+
+### 🏗️ Refactored
+- **Plugin Lifecycle**: Aligned rendering and cleanup with SiYuan's protyle lifecycle events.
+- **Build Workflow**: Added a reproducible pnpm lockfile based release workflow.
+
+### 🛠️ Fixed
+- **Navigation Stability**: Reduced rare disappearing-button cases during tab switching and protyle destruction.
+- **Settings UI**: Hide margin settings when using the side floating layout.
+- **Manual Language Loading**: Load generated i18n JSON files from production builds.
+
+### 🎨 Improved
+- **Navigation Performance**: Added a short-lived document tree cache for smoother continuous page navigation.
+
 ## [1.2.0] - 2026-01-11
 
 ### ✨ Added
