@@ -1,21 +1,19 @@
 import { Plugin, Setting } from "siyuan";
-import { DEFAULT_SETTINGS, IPluginSettings } from "../utils/constants";
+import { DEFAULT_SETTINGS } from "../utils/constants";
+import type { IPluginSettings, LanguageMode, LayoutMode } from "../utils/constants";
 import { errorLog } from "../utils/logger";
-import { ISettingService } from "./ISettingService";
+import type { ISettingService } from "./ISettingService";
 
 export class SettingService implements ISettingService {
   private settings: IPluginSettings = DEFAULT_SETTINGS;
-  private manualI18n: any = null;
-  private onUpdateCallback: () => Promise<void> = null;
+  private manualI18n: Record<string, string> | null = null;
+  private onUpdateCallback: (() => Promise<void>) | null = null;
 
   constructor(private plugin: Plugin) {}
 
   async load() {
-    this.settings = Object.assign(
-      {},
-      DEFAULT_SETTINGS,
-      await this.plugin.loadData("settings.json")
-    );
+    const savedSettings = await this.plugin.loadData("settings.json") as Partial<IPluginSettings> | null;
+    this.settings = this.normalizeSettings(savedSettings);
 
     if (this.settings.language !== "auto") {
       await this.loadLanguageData(this.settings.language);
@@ -66,7 +64,11 @@ export class SettingService implements ISettingService {
     this.addMarginItem("marginBottomTitle", "marginBottomDesc", "marginBottom");
   }
 
-  private createSelect(options: { value: string, text: string }[], currentValue: string, onChange: (value: string) => void) {
+  private createSelect<T extends string>(
+    options: { value: T, text: string }[],
+    currentValue: T,
+    onChange: (value: T) => void
+  ): HTMLSelectElement {
     const select = document.createElement("select");
     select.className = "b3-select fn__size-200";
     options.forEach(opt => {
@@ -76,7 +78,7 @@ export class SettingService implements ISettingService {
       if (currentValue === opt.value) o.selected = true;
       select.appendChild(o);
     });
-    select.onchange = () => onChange(select.value);
+    select.onchange = () => onChange(select.value as T);
     return select;
   }
 
@@ -89,7 +91,7 @@ export class SettingService implements ISettingService {
           { value: "auto", text: this.getI18nValue("languageAuto") },
           { value: "zh_CN", text: this.getI18nValue("languageZH") },
           { value: "en_US", text: this.getI18nValue("languageEN") }
-        ], this.settings.language, (val) => { this.settings.language = val; });
+        ], this.settings.language, (val: LanguageMode) => { this.settings.language = val; });
       }
     });
   }
@@ -102,7 +104,7 @@ export class SettingService implements ISettingService {
         return this.createSelect([
           { value: "bottom", text: this.getI18nValue("layoutModeBottom") },
           { value: "side", text: this.getI18nValue("layoutModeSide") }
-        ], this.settings.layoutMode, (val) => { this.settings.layoutMode = val as any; });
+        ], this.settings.layoutMode, (val: LayoutMode) => { this.settings.layoutMode = val; });
       }
     });
   }
@@ -118,6 +120,7 @@ export class SettingService implements ISettingService {
         const input = document.createElement("input");
         input.className = "b3-text-field fn__size-60"; 
         input.type = "number";
+        input.min = "0";
         input.style.height = "28px";
         input.style.padding = "4px 8px";
         input.style.textAlign = "right";
@@ -138,27 +141,38 @@ export class SettingService implements ISettingService {
     });
   }
 
-  private async loadLanguageData(lang: string) {
+  private async loadLanguageData(lang: LanguageMode) {
+    if (lang === "auto") {
+      this.manualI18n = null;
+      return;
+    }
+
     try {
-      const response = await fetch(`/plugins/next-page-button/i18n/${lang}.yaml`);
-      const text = await response.text();
-      const data: any = {};
-      
-      // Basic robust YAML parser
-      text.split(/\r?\n/).forEach(line => {
-        const colonIndex = line.indexOf(':');
-        if (colonIndex > -1) {
-          const key = line.substring(0, colonIndex).trim();
-          const value = line.substring(colonIndex + 1).trim();
-          if (key) {
-            // Remove quotes if present
-            data[key] = value.replace(/^["'](.*)["']$/, '$1');
-          }
-        }
-      });
-      this.manualI18n = data;
+      const response = await fetch(`/plugins/next-page-button/i18n/${lang}.json`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      this.manualI18n = await response.json();
     } catch (e) {
       errorLog("NextPageButton", `Failed to load language: ${lang}`, e);
     }
+  }
+
+  private normalizeSettings(savedSettings: Partial<IPluginSettings> | null): IPluginSettings {
+    const language = savedSettings?.language;
+    const layoutMode = savedSettings?.layoutMode;
+
+    return {
+      marginTop: this.normalizePixelValue(savedSettings?.marginTop),
+      marginBottom: this.normalizePixelValue(savedSettings?.marginBottom),
+      language: language === "zh_CN" || language === "en_US" ? language : DEFAULT_SETTINGS.language,
+      layoutMode: layoutMode === "side" || layoutMode === "bottom" ? layoutMode : DEFAULT_SETTINGS.layoutMode
+    };
+  }
+
+  private normalizePixelValue(value: unknown): string {
+    const numericValue = Number(value ?? 0);
+    return Number.isFinite(numericValue) ? String(Math.max(0, numericValue)) : "0";
   }
 }

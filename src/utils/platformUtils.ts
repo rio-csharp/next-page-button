@@ -5,10 +5,10 @@
 // Extend Window interface for mobile properties
 declare global {
   interface Window {
-    JSAndroid?: any;
-    JSHarmony?: any;
+    JSAndroid?: unknown;
+    JSHarmony?: unknown;
     webkit?: {
-      messageHandlers?: any;
+      messageHandlers?: unknown;
     };
   }
 }

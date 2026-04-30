@@ -1,21 +1,21 @@
 import { Plugin } from "siyuan";
+import type { IProtyle } from "siyuan";
 import "./index.scss";
-import { isMobile } from "./utils/platformUtils";
 import { infoLog, errorLog } from "./utils/logger";
-import { DocumentService, IDocumentService } from "./services/DocumentService";
-import { KeyboardDetectionService, IKeyboardDetectionService } from "./services/KeyboardDetectionService";
+import { DocumentService } from "./services/DocumentService";
+import type { IDocumentService } from "./services/DocumentService";
 import { NavigationService } from "./services/NavigationService";
-import { INavigationService } from "./services/INavigationService";
-import { UIRenderService, IUIRenderService } from "./services/ui/UIRenderService";
+import type { INavigationService } from "./services/INavigationService";
+import { UIRenderService } from "./services/ui/UIRenderService";
+import type { IUIRenderService } from "./services/ui/UIRenderService";
 import { SettingService } from "./services/SettingService";
-import { ISettingService } from "./services/ISettingService";
+import type { ISettingService } from "./services/ISettingService";
 
 export default class PageNavPlugin extends Plugin {
   private documentService!: IDocumentService;
   private navigationService!: INavigationService;
   private uiRenderService!: IUIRenderService;
   private settingService!: ISettingService;
-  private keyboardDetectionService?: IKeyboardDetectionService;
 
   async onload() {
     try {
@@ -33,12 +33,6 @@ export default class PageNavPlugin extends Plugin {
 
       this.registerEventListeners();
 
-      if (isMobile() && this.keyboardDetectionService) {
-        this.keyboardDetectionService.start((keyboardVisible: boolean) => {
-          this.uiRenderService.toggleVisibility(!keyboardVisible);
-        });
-      }
-
       infoLog("NextPageButton", "Plugin loaded successfully");
     } catch (err) {
       errorLog("NextPageButton", "Plugin load failed:", err);
@@ -48,10 +42,6 @@ export default class PageNavPlugin extends Plugin {
   onunload() {
     try {
       this.unregisterEventListeners();
-
-      if (this.keyboardDetectionService) {
-        this.keyboardDetectionService.stop();
-      }
 
       this.uiRenderService.cleanup();
 
@@ -70,27 +60,41 @@ export default class PageNavPlugin extends Plugin {
       (key: string) => this.settingService.getI18nValue(key),
       () => this.settingService.getSettings()
     );
-
-    if (isMobile()) {
-      this.keyboardDetectionService = new KeyboardDetectionService();
-    }
   }
 
   private registerEventListeners(): void {
     this.eventBus.on("switch-protyle", this.handleDocumentSwitch);
     this.eventBus.on("loaded-protyle-static", this.handleDocumentSwitch);
+    this.eventBus.on("destroy-protyle", this.handleProtyleDestroy);
+    this.eventBus.on("mobile-keyboard-show", this.handleMobileKeyboardShow);
+    this.eventBus.on("mobile-keyboard-hide", this.handleMobileKeyboardHide);
   }
 
   private unregisterEventListeners(): void {
     this.eventBus.off("switch-protyle", this.handleDocumentSwitch);
     this.eventBus.off("loaded-protyle-static", this.handleDocumentSwitch);
+    this.eventBus.off("destroy-protyle", this.handleProtyleDestroy);
+    this.eventBus.off("mobile-keyboard-show", this.handleMobileKeyboardShow);
+    this.eventBus.off("mobile-keyboard-hide", this.handleMobileKeyboardHide);
   }
 
-  private handleDocumentSwitch = async () => {
+  private handleDocumentSwitch = async (event?: CustomEvent<{ protyle: IProtyle }>) => {
     try {
-      await this.uiRenderService.renderNavigationButtons();
+      await this.uiRenderService.renderNavigationButtons(false, event?.detail?.protyle);
     } catch (err) {
       errorLog("NextPageButton", "Document switch handling error:", err);
     }
+  };
+
+  private handleProtyleDestroy = (event: CustomEvent<{ protyle: IProtyle }>) => {
+    this.uiRenderService.cleanupProtyle(event.detail.protyle);
+  };
+
+  private handleMobileKeyboardShow = () => {
+    this.uiRenderService.toggleVisibility(false);
+  };
+
+  private handleMobileKeyboardHide = () => {
+    this.uiRenderService.toggleVisibility(true);
   };
 }

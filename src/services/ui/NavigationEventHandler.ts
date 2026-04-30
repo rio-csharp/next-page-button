@@ -1,6 +1,6 @@
 import { errorLog } from "../../utils/logger";
-import { IDocumentService } from "../DocumentService";
-import { INavigationService } from "../NavigationService";
+import type { IDocumentService } from "../DocumentService";
+import type { INavigationService } from "../INavigationService";
 
 export class NavigationEventHandler {
   private isNavigating = false;
@@ -26,24 +26,15 @@ export class NavigationEventHandler {
     };
   }
 
-  public async handleNavigate(offset: number): Promise<void> {
+  public async handleNavigate(offset: number, docId?: string | null): Promise<void> {
     if (this.isNavigating) return;
 
     this.isNavigating = true;
     try {
-      const currentDocId = this.documentService.getCurrentDocumentId();
+      const currentDocId = docId || this.documentService.getCurrentDocumentId();
       if (!currentDocId) return;
 
-      const notebookId = await this.documentService.getNotebookIdByDocId(currentDocId);
-      if (!notebookId) return;
-
-      const currentPosition = await this.documentService.getCurrentDocumentPosition(currentDocId);
-      const targetPosition = currentPosition + offset;
-
-      const targetDocId = await this.documentService.getDocumentIdByPosition(
-        notebookId,
-        targetPosition
-      );
+      const targetDocId = await this.documentService.getDocumentIdByOffset(currentDocId, offset);
       if (targetDocId) {
         this.navigationService.navigateToDocument(targetDocId);
       }

@@ -1,7 +1,8 @@
 import { openTab } from "siyuan";
+import type { App } from "siyuan";
 import { isMobile } from "../utils/platformUtils";
 import { errorLog, warnLog } from "../utils/logger";
-import { INavigationService } from "./INavigationService";
+import type { INavigationService } from "./INavigationService";
 
 declare global {
   interface Window {
@@ -10,7 +11,7 @@ declare global {
 }
 
 export class NavigationService implements INavigationService {
-  constructor(private app: any) {}
+  constructor(private app: App) {}
 
   navigateToDocument(docId: string): void {
     if (isMobile()) {

@@ -16,7 +16,7 @@ pnpm run make-link-win   # Windows
 pnpm run dev
 ```
 
-**Prerequisites**: Node.js 18+, pnpm 8+, SiYuan Notes
+**Prerequisites**: Node.js 18+, pnpm 10+, SiYuan Notes
 
 ## 🐛 Debug Mode
 
@@ -35,7 +35,7 @@ src/
 │   ├── DocumentService.ts          # Document tree & position tracking
 │   ├── NavigationService.ts        # Platform-specific navigation
 │   ├── SettingService.ts           # Settings & I18n management
-│   └── KeyboardDetectionService.ts  # Mobile keyboard detection
+│   └── SiYuanApiClient.ts          # Typed SiYuan API wrapper
 ├── utils/
 │   ├── constants.ts            # Configuration (DEBUG_MODE here)
 │   ├── logger.ts               # Logging utilities
@@ -50,10 +50,11 @@ src/
 
 - **DocumentService**: Document tree loading, position tracking, notebook queries
 - **NavigationService**: Desktop (`openTab`) vs Mobile (`window.openFileByURL`)
-- **UIRenderService**: Manages the lifecycle of the `Navigation.svelte` component
+- **UIRenderService**: Manages the lifecycle of the Svelte navigation components
 - **Navigation.svelte**: Declarative UI for navigation buttons and page indicator
 - **NavigationEventHandler**: Decoupled logic for handling navigation triggers
-- **KeyboardDetectionService**: Mobile-only, auto-hide buttons when keyboard shows
+- **SiYuan event bus**: Uses `switch-protyle`, `loaded-protyle-static`, `destroy-protyle`,
+  `mobile-keyboard-show`, and `mobile-keyboard-hide` for lifecycle coordination
 
 **Key Features**
 - Per-notebook page numbering
@@ -61,7 +62,7 @@ src/
 - Configurable UI (dynamic margins via settings)
 - Memory leak prevention (proper cleanup)
 - AbortController for async operations
-- Platform detection for mobile/desktop
+- Native SiYuan mobile keyboard events
 
 ## 📦 Release
 
@@ -81,7 +82,7 @@ git tag v0.x.x && git push origin v0.x.x
 adb connect 127.0.0.1:16384
 
 # Build & deploy
-pnpm run build
+corepack pnpm run build
 adb push dist/index.js /sdcard/
 adb push dist/index.css /sdcard/
 adb push dist/plugin.json /sdcard/
@@ -94,7 +95,7 @@ adb logcat | grep -i "siyuan\|plugin"
 
 **Mobile Notes:**
 - Use `window.openFileByURL()` for navigation (not `openTab`)
-- Keyboard detection via `window.visualViewport`
+- Keyboard visibility is handled via SiYuan plugin events
 - Requires root for `/Android/data/` access
 
 ## 💡 Best Practices
